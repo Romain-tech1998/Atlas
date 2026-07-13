@@ -24,6 +24,8 @@ function describeAction(intent: IntentResult, entities: EntityResult): { action:
       return { action: "create_document_draft", reasoning: localized("routingReasoning.document") };
     case "shopping":
       return { action: "compare_shopping_options", reasoning: localized("routingReasoning.shopping") };
+    case "travel":
+      return { action: "compare_travel_options", reasoning: localized("routingReasoning.travel") };
     case "conversation":
       return { action: "answer_question", reasoning: localized("routingReasoning.conversation") };
     default:
@@ -79,6 +81,8 @@ export function buildSummary(module: AxisModuleId, entities: EntityResult): Loca
       return localized("axisSummary.document", { subject });
     case "shopping":
       return localized("axisSummary.shopping", { subject });
+    case "travel":
+      return localized("axisSummary.travel", { subject });
     case "conversation":
       return localized("axisSummary.conversation", { subject });
     default:

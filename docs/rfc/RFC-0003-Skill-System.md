@@ -330,6 +330,60 @@ roll back independently. The branching rule itself — 2+ distinct
 `compare_options`, otherwise `find_lowest_value` runs unchanged — is
 exactly what was originally planned; only the sprint boundaries moved.
 
+## 7b. Second Module: Travel (Sprint-033)
+
+Travel is the second Module past "documented target architecture only,"
+chosen specifically to test whether §7a's design actually generalizes or
+was quietly Shopping-specific. It confirms the former.
+
+**`compare_options`/Verdict-branching needed zero changes.**
+`evidenceService.recomputeVerdict` branches on `optionLabel` count alone
+(2+ distinct labels with comparable Evidence → `compare_options`) — it
+never reads which `AxisModuleId` routed the Decision there. A Travel
+Decision (comparing named flights or hotels) hits the exact same engine
+Shopping uses, unmodified. This is the payoff of §7a's original framing —
+"Shopping is a 5th `AxisModuleId`, not a new architectural layer" — proven
+against a second, unrelated vertical rather than just asserted.
+
+**What Travel actually needs is the front door, not the engine:** a 6th
+`AxisModuleId` (`"travel"`), an intent (`compare_travel_options`), trigger
+patterns in `intentEngine.ts`, and the corresponding
+`routingEngine.ts`/`planningEngine.ts` cases — the same four files §7a's
+Shopping rollout touched for its own front door, and nothing in
+`evidenceService.ts`, `compare-options.ts`, or the Verdict schema.
+
+**One new measure: `duration`.** `price` and `rating` already exist and
+already cover two of Travel's most obvious comparison criteria (flight/
+hotel cost, review score) — reused as-is, no changes. `duration` (flight
+time, trip length) is the one concrete criterion neither covers, and is
+added the same way `rating`/`quality`/`brand_score` were for Shopping:
+one new `NormalizedMeasure`, one new `MEASURE_DIRECTION` entry
+(`lower_is_better`), one new keyword pattern. Nothing else — no
+`distance`/`stops`/other travel-flavored measure is added speculatively;
+those wait for a concrete sprint that actually needs them, per this
+project's standing "extend only when a concrete case needs it" rule
+(§2, and `evidence-normalization.ts`'s own header comment).
+
+**Intent-pattern ordering matters and is worth stating explicitly.**
+`intentEngine.ts`'s Shopping rule already matches a bare `/^compare\s+/i`
+— meaning "Compare flights to Paris vs Rome" would silently match
+Shopping's generic pattern before ever reaching a Travel-specific one, if
+Travel's rule were appended after Shopping's in the rules array (first
+match wins, RULES is checked in order). The fix is ordering, not a
+smarter pattern: Travel's more specific patterns (`flight`, `hotel`,
+`trip` keywords) are inserted *before* the Shopping rule, so
+travel-flavored phrasing is claimed first and only genuinely
+Shopping-flavored "compare X and Y" phrasing falls through to Shopping's
+broader pattern — unchanged behavior for every existing Shopping test.
+
+**The `moduleLabel`/`domainLabel` split (flagged as a gap in Sprint-030,
+fixed in Sprint-031) is called out proactively this time, not
+retroactively.** `moduleLabel`'s exhaustive `switch` over `AxisModuleId`
+is compiler-forced correct the moment `"travel"` is added to the type;
+`domainLabel`'s manual `if`-chain is not, and must be updated by hand in
+the same sprint — not left for a future sprint's verification pass to
+catch, the way it was the first time.
+
 ## 8. Relationship with Atlas Brain
 
 - **Atlas Brain creates `ExecutionPlan`s.** (`src/brain/planning/`, unchanged
@@ -1006,6 +1060,7 @@ the rest are net-new.
 | 2026-07-13 | User-owned location for the Weather Provider: new `UserLocation` model (mirrors `AtlasState`'s one-row-per-user/upsert shape). Three corrections settled: (1) setting a location bypasses Atlas Brain/Axis entirely — a plain auth-gated API route (`/api/user-location`) mirroring the existing Google Calendar connect/disconnect precedent, not a new `"location"` Axis module; (2) location is not added to `ContextBundle` — nothing in the Axis pipeline consumes it yet, and the only consumer (Providers page) already reads context directly, same as `ExternalConnection`; (3) geocoding is a second capability (`geocoding:read`) on the existing `openMeteoProvider` instance, not a new registered Provider — satisfies RFC-0003 §8b's "every external system sits behind a Provider" rule without a new registry entry. `getCurrentWeather` becomes parameterized (`latitude`, `longitude`) instead of reading module constants. `resolve_location`/`set_user_location` are the first Skills ever invoked from outside `atlasBrain.runPipeline`; `runSkill` needed no change. Documented in [§8f](#8f-user-location-for-the-weather-provider-sprint-027). Implemented in Sprint-027. | Recorded |
 | 2026-07-13 | First real Module: Shopping, as a 5th `AxisModuleId`, not a new architectural layer (extends `intentEngine`/`routingEngine`/`planningEngine`'s existing mechanism). Four Agents at MVP — Price, Reviews, Quality, Brand — none persisted or independently coded; each is a recognized `NormalizedMeasure` (`price` existing, `rating`/`quality`/`brand_score` new) plus its UI. Multi-Agent reconciliation is `compare_options` (§9), built for the first time: deterministic per-measure min-max normalization (direction-aware via a new `MEASURE_DIRECTION` map), summed per option, never an LLM judgment call. `Evidence.metadata.optionLabel` (new field, same denormalized-string pattern as `sourceDocumentTitle`) lets Evidence be grouped by which option it describes; `find_lowest_value`'s own path is unaffected. Resolves all three of §10's open Agent questions (Agent count, persisted identity, reconciliation). Split across two sprints, mirroring Calendar's own three-sprint rollout: Sprint-029 builds the comparison engine only (measures, `optionLabel`, `compare_options`, Verdict's new `ranking` field) with no new Axis routing or UI; Sprint-030 adds the `"shopping"` module/routing and the Decision-page UI. Cross-Module interconnection (Agents from *different* Modules on one Mission) stays deferred until the Skill Planner exists — Shopping's Agents are Planner-ready (act only through Skills) but no cross-Module execution path is built yet. Real market-wide product discovery (no named candidates) deferred until a real product-search Provider is chosen — no free/keyless one exists the way Open-Meteo did. Documented in [§7a](#7a-first-real-module-shopping-sprint-029030). Scoped for implementation in Sprint-029 (engine) and Sprint-030 (module/UI). | Recorded |
 | 2026-07-13 | Correction to the row above, recorded once Sprint-029/030 actually shipped: the engine/UI split held, but the sprint *boundary* inside "engine" moved. Sprint-029 shipped narrower than planned — only the new measures, `MEASURE_DIRECTION`, and `compare_options` itself, with pure unit tests and zero database/pipeline involvement (matching `find_lowest_value`'s own original Sprint-006 shape). `optionLabel`, `Verdict.ranking`, the `find_lowest_value`/`compare_options` branching logic in `evidenceService.recomputeVerdict`, and the `"shopping"` `AxisModuleId`/`intentEngine`/`routingEngine`/`planningEngine` wiring all landed together in Sprint-030 instead, once routing needed a real path to `compare_options`. The Decision-page UI is deferred one sprint further still, to Sprint-031 — the same reviewability reasoning that split Sprint-029 from Sprint-030 (this sprint alone already touches Axis routing, Evidence, and the Verdict schema) applies again to adding a UI on top in the same sprint. The branching rule itself shipped exactly as designed: 2+ distinct `optionLabel`s with comparable Evidence routes the Verdict through `compare_options`; otherwise `find_lowest_value` runs unchanged. See [§7a](#7a-first-real-module-shopping-sprint-029030)'s addendum. Implemented in Sprint-030. | Recorded |
+| 2026-07-13 | Second Module: Travel, as a 6th `AxisModuleId`, chosen specifically to test whether §7a's Module design generalizes past Shopping or was quietly Shopping-specific. It generalizes: `evidenceService.recomputeVerdict`'s `compare_options` branching needed zero changes (it already keyed purely on `optionLabel` count, never on `AxisModuleId`). Only the "front door" was built — `intentEngine`/`routingEngine`/`planningEngine` cases plus one new `NormalizedMeasure` (`duration`, `lower_is_better`) — reusing `price`/`rating` as-is for cost and review-score comparison. `intentEngine`'s new Travel rule is ordered *before* the existing Shopping rule (Shopping's `/^compare\s+/i` pattern is broad enough to otherwise swallow Travel-flavored phrasing first, since rules are checked in order and first match wins); every existing Shopping trigger-pattern test is unaffected since Travel's patterns are narrower and Travel-specific. `moduleLabel`/`domainLabel` both updated in this same sprint (Sprint-030/031's gap — `domainLabel`'s manual `if`-chain isn't compiler-forced the way `moduleLabel`'s exhaustive `switch` is — is called out proactively this time rather than caught retroactively). Documented in [§7b](#7b-second-module-travel-sprint-033). Scoped for implementation in Sprint-033. | Recorded |
 
 These four decisions resolve RFC-0001 §11's open question about the
 relationship between the Planning Engine and the Skill Planner. They do not

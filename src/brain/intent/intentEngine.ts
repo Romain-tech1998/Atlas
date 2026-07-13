@@ -48,6 +48,17 @@ const RULES: IntentRule[] = [
     ],
   },
   {
+    module: "travel",
+    intent: "compare_travel_options",
+    confidence: 0.85,
+    patterns: [
+      /^compare\s+(flights?|hotels?|trips?)\b/i,
+      /^help me (plan|choose|book)\s+(a\s+)?trip\b/i,
+      /^(flights?|hotels?)\s+(to|for)\s+/i,
+      /^book\s+(a\s+)?(flight|hotel|trip)\b/i,
+    ],
+  },
+  {
     module: "shopping",
     intent: "compare_shopping_options",
     confidence: 0.85,

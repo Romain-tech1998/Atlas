@@ -43,6 +43,13 @@ function draftStepsForModule(
         ],
         missingInfo: [],
       };
+    case "travel":
+      return {
+        steps: [
+          { description: localized("planStep.compareTravelOptions", { title: entities.title }), module: "travel" },
+        ],
+        missingInfo: [],
+      };
     case "conversation":
       return {
         steps: [{ description: localized("planStep.answerQuestion"), module: "conversation" }],

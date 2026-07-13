@@ -75,6 +75,27 @@ describe("normalizeEvidence — Sprint-029 measures (rating, quality, brand_scor
     expect(value).toMatchObject({ kind: "currency", value: 30, currency: "EUR", measure: "brand_score" });
   });
 
+  it("recognizes 'duration' via metadata.measure", () => {
+    const evidence = makeEvidence({
+      claim: "Flight length.",
+      metadata: { value: 7, measure: "duration" },
+    });
+    const [value] = normalizeEvidence(evidence);
+    expect(value).toMatchObject({ kind: "numeric", value: 7, measure: "duration" });
+  });
+
+  it("recognizes 'duration' via the 'duration is' claim keyword alongside a currency claim", () => {
+    const evidence = makeEvidence({ claim: "The duration is long. USD 20 total." });
+    const [value] = normalizeEvidence(evidence);
+    expect(value).toMatchObject({ kind: "currency", value: 20, currency: "USD", measure: "duration" });
+  });
+
+  it("recognizes 'duration' via the 'takes' claim keyword alongside a currency claim", () => {
+    const evidence = makeEvidence({ claim: "The flight takes 7 hours. USD 20 total." });
+    const [value] = normalizeEvidence(evidence);
+    expect(value).toMatchObject({ kind: "currency", value: 20, currency: "USD", measure: "duration" });
+  });
+
   it("treats an unrecognized metadata.measure value the same as absent (unknown)", () => {
     const evidence = makeEvidence({
       claim: "Some claim.",

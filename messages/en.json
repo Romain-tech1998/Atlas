@@ -198,7 +198,8 @@
         "salary": "salary",
         "rating": "rating",
         "quality": "quality",
-        "brand_score": "brand score"
+        "brand_score": "brand score",
+        "duration": "duration"
       },
       "why": {
         "title": "Why?"
@@ -391,6 +392,7 @@
     "memory": "Memory",
     "document": "Document",
     "shopping": "Shopping",
+    "travel": "Travel",
     "conversation": "Conversation",
     "unknown": "Unknown"
   },
@@ -405,6 +407,7 @@
     "storeMemory": "Store memory: \"{title}\"",
     "saveDocument": "Save document: \"{title}\"",
     "compareShoppingOptions": "Compare options: \"{title}\"",
+    "compareTravelOptions": "Compare options: \"{title}\"",
     "answerQuestion": "Answer the question directly",
     "clarifyRequest": "Ask the user to clarify the request",
     "initState": "Initialize Atlas State for this user"
@@ -414,6 +417,7 @@
     "memory": "Detected a statement about the user, so Atlas Brain will store it as a memory.",
     "document": "Detected a save/write request, so the Document module will create a draft note.",
     "shopping": "Detected a shopping-comparison request, so the Shopping module will compare the named options.",
+    "travel": "Detected a travel-comparison request, so the Travel module will compare the named options.",
     "conversation": "Detected a question, so the Conversation module will handle it directly.",
     "unknown": "No module matched this request with enough confidence, so Atlas Brain will ask for clarification."
   },
@@ -422,6 +426,7 @@
     "memory": "Remember: \"{subject}\"",
     "document": "Save a document: \"{subject}\"",
     "shopping": "Compare options: \"{subject}\"",
+    "travel": "Compare options: \"{subject}\"",
     "conversation": "Answer the question: \"{subject}\"",
     "unknown": "Unrecognized request: \"{subject}\""
   },

@@ -30,6 +30,7 @@ export const NORMALIZED_MEASURES = [
   "rating",
   "quality",
   "brand_score",
+  "duration",
 ] as const;
 export type NormalizedMeasure = (typeof NORMALIZED_MEASURES)[number];
 
@@ -45,6 +46,7 @@ export const MEASURE_DIRECTION: Record<NormalizedMeasure, "lower_is_better" | "h
   rating: "higher_is_better",
   quality: "higher_is_better",
   brand_score: "higher_is_better",
+  duration: "lower_is_better",
 };
 
 interface NormalizedValueBase {
@@ -166,6 +168,7 @@ const MEASURE_KEYWORDS: ReadonlyArray<{ pattern: RegExp; measure: NormalizedMeas
   { pattern: /\brating is\b|\brated\b/i, measure: "rating" },
   { pattern: /\bquality is\b/i, measure: "quality" },
   { pattern: /\bbrand score is\b/i, measure: "brand_score" },
+  { pattern: /\bduration is\b|\btakes\b/i, measure: "duration" },
 ];
 
 /** Only fires on one of the obvious keyword phrases above — if none match,

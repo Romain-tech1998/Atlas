@@ -198,7 +198,8 @@
         "salary": "salaire",
         "rating": "note",
         "quality": "qualité",
-        "brand_score": "score de marque"
+        "brand_score": "score de marque",
+        "duration": "durée"
       },
       "why": {
         "title": "Pourquoi ?"
@@ -391,6 +392,7 @@
     "memory": "Mémoire",
     "document": "Document",
     "shopping": "Shopping",
+    "travel": "Voyage",
     "conversation": "Conversation",
     "unknown": "Inconnu"
   },
@@ -405,6 +407,7 @@
     "storeMemory": "Enregistrer le souvenir : « {title} »",
     "saveDocument": "Enregistrer le document : « {title} »",
     "compareShoppingOptions": "Comparer les options : « {title} »",
+    "compareTravelOptions": "Comparer les options : « {title} »",
     "answerQuestion": "Répondre directement à la question",
     "clarifyRequest": "Demander des précisions à l'utilisateur",
     "initState": "Initialiser l'état Atlas pour cet utilisateur"
@@ -414,6 +417,7 @@
     "memory": "Déclaration sur l'utilisateur détectée : Atlas Brain va l'enregistrer comme un souvenir.",
     "document": "Demande d'enregistrement détectée : le module Document va créer une note.",
     "shopping": "Demande de comparaison détectée : le module Shopping va comparer les options nommées.",
+    "travel": "Demande de comparaison de voyage détectée : le module Voyage va comparer les options nommées.",
     "conversation": "Question détectée : le module Conversation va y répondre directement.",
     "unknown": "Aucun module ne correspond à cette requête avec suffisamment de confiance : Atlas Brain va demander des précisions."
   },
@@ -422,6 +426,7 @@
     "memory": "Se souvenir : « {subject} »",
     "document": "Enregistrer un document : « {subject} »",
     "shopping": "Comparer les options : « {subject} »",
+    "travel": "Comparer les options : « {subject} »",
     "conversation": "Répondre à la question : « {subject} »",
     "unknown": "Requête non reconnue : « {subject} »"
   },

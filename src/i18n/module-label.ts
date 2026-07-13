@@ -14,6 +14,8 @@ export function moduleLabel(t: Translator, moduleId: AxisModuleId): string {
       return t("modules.document");
     case "shopping":
       return t("modules.shopping");
+    case "travel":
+      return t("modules.travel");
     case "conversation":
       return t("modules.conversation");
     case "unknown":
@@ -30,7 +32,8 @@ export function domainLabel(t: Translator, domainId: string): string {
     domainId === "memory" ||
     domainId === "document" ||
     domainId === "conversation" ||
-    domainId === "shopping"
+    domainId === "shopping" ||
+    domainId === "travel"
   ) {
     return moduleLabel(t, domainId);
   }

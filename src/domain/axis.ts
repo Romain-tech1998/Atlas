@@ -10,6 +10,7 @@ export const AXIS_MODULES = [
   "memory",
   "conversation",
   "shopping",
+  "travel",
   "unknown",
 ] as const;
 
@@ -21,6 +22,7 @@ export const AXIS_INTENTS = [
   "create_document",
   "ask_question",
   "compare_shopping_options",
+  "compare_travel_options",
   "unknown",
 ] as const;
 
