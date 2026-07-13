@@ -1,0 +1,439 @@
+{
+  "common": {
+    "appName": "Atlas",
+    "appDescription": "Atlas — an AI operating system for everyday life assistance.",
+    "somethingWentWrong": "Something went wrong",
+    "justNow": "just now"
+  },
+  "routing": {
+    "noDecisionRecorded": "No decision was recorded for this request."
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "axis": "Axis",
+    "documents": "Documents",
+    "providers": "Providers",
+    "signOut": "Sign out"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "login": {
+    "title": "Sign in to Atlas",
+    "subtitle": "Use the seeded demo account, or your own credentials.",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "invalidCredentials": "Invalid email or password."
+  },
+  "home": {
+    "hero": {
+      "title": "What would you like to accomplish today?",
+      "subtitle": "Atlas will turn it into a plan and get moving.",
+      "placeholder": "Remind me to plan my trip to Tokyo next month",
+      "cta": "Start this mission",
+      "examplesLabel": "Or try one of these:",
+      "examples": [
+        "Schedule a dentist appointment for next week",
+        "I need to renew my passport before my trip",
+        "Remind me to book flights for my Tokyo trip",
+        "Draft a packing checklist for the weekend trip"
+      ]
+    },
+    "compact": {
+      "title": "Start another mission",
+      "placeholder": "What would you like to accomplish?",
+      "cta": "Start"
+    },
+    "transition": {
+      "phase1": "Understanding your goal...",
+      "phase2": "Building your mission...",
+      "phase3": "Creating your first execution plan...",
+      "phase4": "Almost ready..."
+    },
+    "creationError": "Failed to create mission",
+    "missions": {
+      "title": "Your missions",
+      "status": "{activeCount} in progress{blockedCount, plural, =0 { · nothing waiting on you} other { · # waiting on you}}",
+      "noActive": "No active missions right now.",
+      "completedAbandoned": "Completed & abandoned"
+    },
+    "recommends": "Atlas recommends"
+  },
+  "mission": {
+    "status": {
+      "active": "Active",
+      "completed": "Completed",
+      "abandoned": "Abandoned"
+    },
+    "hero": {
+      "readyToGo": "Ready to go",
+      "waitingForResponse": "Waiting for your response",
+      "wrappedUp": "Mission wrapped up",
+      "needsInput": "Atlas needs your input",
+      "currentFocus": "Current focus"
+    },
+    "decision": {
+      "workingOn": "Atlas is currently working on: {title}. Status: {status}."
+    },
+    "why": {
+      "label": "Why: ",
+      "kicksOff": "This kicks off the mission.",
+      "pickingUp": "Picking up where you left off."
+    },
+    "card": {
+      "waitingOnYou": "Waiting on you",
+      "meta": "{count, plural, one {# update} other {# updates}} · {time}"
+    },
+    "actions": {
+      "markComplete": "Mark complete",
+      "abandon": "Abandon this mission",
+      "updateFailed": "Failed to update mission",
+      "confirmComplete": "Mark this mission complete?",
+      "confirmAbandon": "Abandon this mission?",
+      "noteLabel": "Note (optional)",
+      "notePlaceholder": "Add a note about how this wrapped up...",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "submitting": "Submitting...",
+      "alreadyTerminal": "This mission has already ended."
+    },
+    "timeline": {
+      "title": "History",
+      "started": "This is where it started.",
+      "outcomeResolved": "Resolved",
+      "outcomeStillBlocked": "Still waiting",
+      "recommendationAccepted": "Recommendation accepted",
+      "recommendationDeclined": "Recommendation declined"
+    },
+    "updateInput": {
+      "heading": "Add an update",
+      "placeholder": "What's the latest on this mission?",
+      "submit": "Update mission",
+      "submitting": "Working...",
+      "workingLabel": "Updating your mission...",
+      "updateFailed": "Failed to add update",
+      "answerPlaceholder": "Answer here...",
+      "answerSubmit": "Send",
+      "missionNotActive": "This mission has already ended."
+    },
+    "currentFocus": {
+      "needsField": "Atlas needs {field, select, dueDate {a due date} intent {a bit more detail about what you're trying to do} other {more information}} to keep going.",
+      "stillNeedsField": "Thanks — Atlas still needs {field, select, dueDate {a due date} intent {a bit more detail about what you're trying to do} other {more information}} to keep going.",
+      "nothingPending": "Nothing pending — ready for your next update.",
+      "gettingStarted": "Getting started...",
+      "done": "Done.",
+      "doneAccepted": "Done — recommendation accepted.",
+      "doneDeclined": "Done — a different outcome was recorded.",
+      "abandoned": "Abandoned.",
+      "missionCompleted": "Mission completed.",
+      "missionAbandoned": "Mission abandoned."
+    },
+    "outcome": {
+      "completedOn": "Completed on {date}",
+      "abandonedOn": "Abandoned on {date}",
+      "entryCompleted": "Mission completed",
+      "entryAbandoned": "Mission abandoned"
+    },
+    "verdictActions": {
+      "accept": "Accept recommendation",
+      "declineToggle": "Record another outcome",
+      "notePrompt": "What happened instead?",
+      "notePlaceholder": "e.g. \"I bought Product C instead\"",
+      "confirm": "Record outcome",
+      "cancel": "Cancel",
+      "submitting": "Submitting...",
+      "error": "Failed to record your decision"
+    },
+    "journey": {
+      "title": "Mission Journey",
+      "progress": "Completed {completed} / Active {active}",
+      "decisionNumber": "Decision {number}",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "status": {
+        "active": "Active",
+        "resolved": "Resolved",
+        "archived": "Archived"
+      }
+    }
+  },
+  "decision": {
+    "status": {
+      "open": "Open",
+      "collectingInformation": "Collecting information",
+      "reasoning": "Reasoning",
+      "ready": "Ready",
+      "resolved": "Resolved",
+      "archived": "Archived"
+    },
+    "evidence": {
+      "title": "Evidence",
+      "count": "{count, plural, =0 {No evidence yet} one {# item} other {# items}}",
+      "insufficientEvidence": "Atlas needs more information before making a recommendation.",
+      "produced": "Atlas has a recommendation ready.",
+      "empty": "Nothing recorded yet.",
+      "claimLabel": "What do you know?",
+      "claimPlaceholder": "e.g. \"RBC offers newcomer banking packages\"",
+      "sourceLabel": "Source",
+      "sourcePlaceholder": "e.g. \"rbc.com\" or \"user\"",
+      "add": "Add evidence",
+      "adding": "Adding...",
+      "addFailed": "Failed to add evidence",
+      "normalized": {
+        "currency": "{amount} {currency}",
+        "currencyWithMeasure": "{amount} {currency} · {measure}",
+        "numeric": "{amount}",
+        "numericWithMeasure": "{amount} · {measure}",
+        "date": "{date}"
+      },
+      "measure": {
+        "price": "price",
+        "budget": "budget",
+        "rent": "rent",
+        "salary": "salary",
+        "rating": "rating",
+        "quality": "quality",
+        "brand_score": "brand score"
+      },
+      "why": {
+        "title": "Why?"
+      },
+      "optionLabelBadge": "{optionLabel}",
+      "ranking": {
+        "title": "Ranking",
+        "position": "{position}. {optionLabel}",
+        "score": "score {score}"
+      },
+      "structured": {
+        "toggle": "Add structured evidence",
+        "optionLabelLabel": "Option",
+        "optionLabelPlaceholder": "e.g. Nike Crew Neck",
+        "measureLabel": "Measure",
+        "measureBlank": "Not specified",
+        "valueLabel": "Value",
+        "currencyLabel": "Currency",
+        "currencyPlaceholder": "e.g. \"CAD\"",
+        "observedAtLabel": "Observed date"
+      },
+      "fromMemory": {
+        "toggle": "From your memories",
+        "empty": "You don't have any memories yet.",
+        "previewLabel": "This will be recorded as:",
+        "confirm": "Attach as evidence",
+        "cancel": "Cancel"
+      },
+      "fromDocument": {
+        "toggle": "From your documents",
+        "empty": "You don't have any documents yet.",
+        "excerptLabel": "Excerpt",
+        "excerptPlaceholder": "Paste or type the exact excerpt to attach",
+        "previewLabel": "This will be recorded as:",
+        "confirm": "Attach as evidence",
+        "cancel": "Cancel"
+      },
+      "sourceDocument": "From document: {title}",
+      "sourceCalendar": "From calendar: {title}",
+      "fromCalendar": {
+        "toggle": "From your calendar",
+        "empty": "No upcoming events on your calendar.",
+        "previewLabel": "This will be recorded as:",
+        "confirm": "Attach as evidence",
+        "cancel": "Cancel",
+        "reconnectRequired": "Your Google Calendar connection needs to be reconnected.",
+        "unavailable": "Your calendar is temporarily unavailable. Please try again later."
+      },
+      "browser": {
+        "searchPlaceholder": "Search...",
+        "noResults": "No results found.",
+        "loadMore": "Load more",
+        "loading": "Loading..."
+      }
+    }
+  },
+  "opportunity": {
+    "title": "Opportunities",
+    "whileYoureHere": "While you're here",
+    "effortLow": "Low effort",
+    "effortMedium": "Some effort",
+    "impactUnblocks": "Unblocks this mission",
+    "reasonWaitingOn": "Waiting on {field, select, dueDate {a due date} intent {a bit more detail about what you're trying to do} other {more information}}."
+  },
+  "axis": {
+    "page": {
+      "title": "Axis",
+      "subtitle": "Raw pipeline access, outside any mission. For everyday use, start from Home."
+    },
+    "input": {
+      "placeholder": "Try \"Remind me to call the bank tomorrow\" or \"Remember that I like oat milk\"",
+      "submit": "Send to Axis",
+      "submitting": "Parsing..."
+    },
+    "noResults": "No requests yet — try one above.",
+    "parseFailed": "Failed to parse request",
+    "resultCard": {
+      "intent": "Intent",
+      "status": "Status",
+      "module": "Module",
+      "due": "Due",
+      "atlasDecision": "Atlas Brain decision"
+    },
+    "context": {
+      "used": "Context used",
+      "firstInteraction": "(first interaction — no prior state)",
+      "nothingRelevant": "Nothing relevant found yet.",
+      "memories": "Memories:",
+      "openTasks": "Open tasks:",
+      "missions": "Missions:",
+      "untitled": "Untitled"
+    },
+    "plan": {
+      "title": "Execution plan",
+      "missing": "Missing: {fields}"
+    },
+    "score": {
+      "title": "Confidence score",
+      "intent": "Intent",
+      "entities": "Entities",
+      "routing": "Routing",
+      "plan": "Plan"
+    },
+    "learningSignals": "Learning signals"
+  },
+  "documents": {
+    "title": "Documents",
+    "subtitle": "Saved from your requests — nothing summarized, always your own words.",
+    "empty": "No documents yet.",
+    "createdAt": "Saved {date}",
+    "searchPlaceholder": "Search...",
+    "noResults": "No results found.",
+    "loadMore": "Load more",
+    "loading": "Loading..."
+  },
+  "providers": {
+    "title": "Providers",
+    "subtitle": "External connections Atlas can use.",
+    "readOnlyNote": "Read-only — Atlas can see your events but can never create, edit, or delete them.",
+    "columns": {
+      "name": "Name",
+      "id": "ID",
+      "status": "Status",
+      "authType": "Auth type",
+      "capabilities": "Capabilities"
+    },
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "connecting": "Connecting",
+      "unavailable": "Unavailable"
+    },
+    "actions": {
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "notices": {
+      "cancelled": "Google Calendar connection cancelled.",
+      "success": "Google Calendar connected."
+    },
+    "errors": {
+      "config": "Google Calendar isn't configured yet.",
+      "state": "Something went wrong verifying that request. Please try connecting again.",
+      "exchangeFailed": "Couldn't complete the Google Calendar connection. Please try again."
+    },
+    "googleCalendar": {
+      "sectionTitle": "Upcoming events",
+      "liveDataLabel": "Live data from your Google Calendar."
+    },
+    "mockCalendar": {
+      "sectionTitle": "Mock Calendar (development only)"
+    },
+    "events": {
+      "empty": "No upcoming events.",
+      "untitled": "Untitled event",
+      "reconnectRequired": "Google Calendar access needs to be reconnected.",
+      "unavailable": "Google Calendar is temporarily unavailable."
+    },
+    "weather": {
+      "sectionTitle": "Current weather",
+      "currentLocation": "Location: {city}",
+      "noLocation": "No location configured yet — set one below to see the weather.",
+      "reading": "{temperatureC}°C, wind {windSpeedKmh} km/h",
+      "unavailable": "Weather data is unavailable right now.",
+      "locationForm": {
+        "placeholder": "City name",
+        "submit": "Set location",
+        "notFound": "Couldn't find that city. Try a different spelling or a larger nearby city.",
+        "unavailable": "Couldn't look up that city right now. Please try again.",
+        "empty": "Enter a city name first.",
+        "success": "Location updated."
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "How Atlas Brain has been reasoning.",
+    "axisRequests": "Axis requests",
+    "avgConfidence": "Avg. confidence",
+    "mostActiveDomains": "Most active domains",
+    "mostSuggestedModules": "Most suggested modules",
+    "latestPlans": "Latest plans",
+    "noPlansYet": "No plans generated yet.",
+    "recentRequests": "Recent requests",
+    "nothingYet": "Nothing yet.",
+    "stepsCount": "{count, plural, one {# step} other {# steps}}"
+  },
+  "modules": {
+    "task": "Task",
+    "memory": "Memory",
+    "document": "Document",
+    "shopping": "Shopping",
+    "conversation": "Conversation",
+    "unknown": "Unknown"
+  },
+  "automation": {
+    "manual": "Manual",
+    "assisted": "Assisted",
+    "automatic": "Automatic"
+  },
+  "planStep": {
+    "createTask": "Create task \"{title}\"",
+    "askDueDate": "Ask the user for a due date",
+    "storeMemory": "Store memory: \"{title}\"",
+    "saveDocument": "Save document: \"{title}\"",
+    "compareShoppingOptions": "Compare options: \"{title}\"",
+    "answerQuestion": "Answer the question directly",
+    "clarifyRequest": "Ask the user to clarify the request",
+    "initState": "Initialize Atlas State for this user"
+  },
+  "routingReasoning": {
+    "task": "Detected a task-creation phrase, so the Task module will draft a new task{hasDueDate, select, yes { due {dueDate}} other {}}.{isDuplicate, select, yes { An open task with the same title already exists, so confidence is lowered.} other {}}",
+    "memory": "Detected a statement about the user, so Atlas Brain will store it as a memory.",
+    "document": "Detected a save/write request, so the Document module will create a draft note.",
+    "shopping": "Detected a shopping-comparison request, so the Shopping module will compare the named options.",
+    "conversation": "Detected a question, so the Conversation module will handle it directly.",
+    "unknown": "No module matched this request with enough confidence, so Atlas Brain will ask for clarification."
+  },
+  "axisSummary": {
+    "task": "Create a task: \"{subject}\"{hasDueDate, select, yes { (due {dueDate})} other {}}",
+    "memory": "Remember: \"{subject}\"",
+    "document": "Save a document: \"{subject}\"",
+    "shopping": "Compare options: \"{subject}\"",
+    "conversation": "Answer the question: \"{subject}\"",
+    "unknown": "Unrecognized request: \"{subject}\""
+  },
+  "verdict": {
+    "findLowestValue": {
+      "recommendationCurrency": "Based on the available evidence, \"{claim}\" currently has the lowest observed value: {value} {currency}.",
+      "recommendationNumeric": "Based on the available evidence, \"{claim}\" currently has the lowest observed value: {value}.",
+      "reasoning": "{count, plural, one {Compared # comparable piece of evidence.} other {Compared # comparable pieces of evidence.}}"
+    },
+    "compareOptions": {
+      "recommendation": "{optionLabel} comes out ahead.",
+      "reasoning": "{count, plural, one {Compared across # option.} other {Compared across # options.}}"
+    }
+  }
+}

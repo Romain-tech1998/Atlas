@@ -1,0 +1,149 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* Atlas design system (Claude Design "Atlas Identity", verified 2026-07-10):
+     Corps/Label -> Work Sans, Display/Titre -> Domine. The previous
+     `--font-sans: var(--font-sans)` was self-referential and never actually
+     resolved to Geist Sans; fixed here alongside the palette swap. */
+  --font-sans: var(--font-work-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-domine);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Atlas design system — colors extracted from Claude Design "Atlas
+ * Identity" (Design System page), verified live 2026-07-10:
+ *   Ink #2B2621 · Paper #F6F1EA · Axis #9C5430 · Sable #9C8F7A · Crème #EFE8D6
+ * Radius base (1rem) matches the design's "carte de couleurs" (16px); the
+ * existing --radius-sm/md/xl/etc. calc() multipliers below were left
+ * untouched and land close to the design's other observed radii (buttons
+ * ~12-13px, badges 8px) without needing a bespoke scale.
+ * --border/--input/--ring reuse the exact rgba(...) values the design
+ * itself uses for shadows (rgba(43,38,33,...) off Ink, rgba(156,84,48,...)
+ * off Axis) rather than inventing new ones.
+ * .dark below is a derived warm inversion, NOT part of the source design
+ * (Atlas Identity only specifies a light/Paper mode) — kept only so the
+ * existing .dark class degrades sensibly if ever toggled.
+ */
+:root {
+  --background: #f6f1ea;
+  --foreground: #2b2621;
+  --card: #efe8d6;
+  --card-foreground: #2b2621;
+  --popover: #f6f1ea;
+  --popover-foreground: #2b2621;
+  --primary: #9c5430;
+  --primary-foreground: #f6f1ea;
+  --secondary: #9c8f7a;
+  --secondary-foreground: #2b2621;
+  --muted: #efe8d6;
+  --muted-foreground: #6b6259;
+  --accent: #efe8d6;
+  --accent-foreground: #2b2621;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: rgba(43, 38, 33, 0.12);
+  --input: rgba(43, 38, 33, 0.12);
+  --ring: rgba(156, 84, 48, 0.5);
+  --chart-1: #9c5430;
+  --chart-2: #9c8f7a;
+  --chart-3: #6b6259;
+  --chart-4: #2b2621;
+  --chart-5: #efe8d6;
+  --radius: 1rem;
+  --sidebar: #f6f1ea;
+  --sidebar-foreground: #2b2621;
+  --sidebar-primary: #9c5430;
+  --sidebar-primary-foreground: #f6f1ea;
+  --sidebar-accent: #efe8d6;
+  --sidebar-accent-foreground: #2b2621;
+  --sidebar-border: rgba(43, 38, 33, 0.12);
+  --sidebar-ring: rgba(156, 84, 48, 0.5);
+}
+
+.dark {
+  --background: #2b2621;
+  --foreground: #f6f1ea;
+  --card: #3a342c;
+  --card-foreground: #f6f1ea;
+  --popover: #2b2621;
+  --popover-foreground: #f6f1ea;
+  --primary: #9c5430;
+  --primary-foreground: #f6f1ea;
+  --secondary: #4a443a;
+  --secondary-foreground: #f6f1ea;
+  --muted: #3a342c;
+  --muted-foreground: #b8aca0;
+  --accent: #3a342c;
+  --accent-foreground: #f6f1ea;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgba(246, 241, 234, 0.12);
+  --input: rgba(246, 241, 234, 0.15);
+  --ring: rgba(156, 84, 48, 0.6);
+  --chart-1: #9c5430;
+  --chart-2: #9c8f7a;
+  --chart-3: #b8aca0;
+  --chart-4: #f6f1ea;
+  --chart-5: #3a342c;
+  --sidebar: #2b2621;
+  --sidebar-foreground: #f6f1ea;
+  --sidebar-primary: #9c5430;
+  --sidebar-primary-foreground: #f6f1ea;
+  --sidebar-accent: #3a342c;
+  --sidebar-accent-foreground: #f6f1ea;
+  --sidebar-border: rgba(246, 241, 234, 0.12);
+  --sidebar-ring: rgba(156, 84, 48, 0.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

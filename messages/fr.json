@@ -1,0 +1,439 @@
+{
+  "common": {
+    "appName": "Atlas",
+    "appDescription": "Atlas — un système d'exploitation IA pour vous aider au quotidien.",
+    "somethingWentWrong": "Une erreur est survenue",
+    "justNow": "à l'instant"
+  },
+  "routing": {
+    "noDecisionRecorded": "Aucune décision n'a été enregistrée pour cette requête."
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "axis": "Axis",
+    "documents": "Documents",
+    "providers": "Fournisseurs",
+    "signOut": "Déconnexion"
+  },
+  "languageSwitcher": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "login": {
+    "title": "Connexion à Atlas",
+    "subtitle": "Utilisez le compte de démonstration, ou vos propres identifiants.",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion en cours...",
+    "invalidCredentials": "E-mail ou mot de passe invalide."
+  },
+  "home": {
+    "hero": {
+      "title": "Qu'aimeriez-vous accomplir aujourd'hui ?",
+      "subtitle": "Atlas en fera un plan et se mettra au travail.",
+      "placeholder": "Remind me to plan my trip to Tokyo next month",
+      "cta": "Commencer cette mission",
+      "examplesLabel": "Quelques exemples à essayer (en anglais) :",
+      "examples": [
+        "Schedule a dentist appointment for next week",
+        "I need to renew my passport before my trip",
+        "Remind me to book flights for my Tokyo trip",
+        "Draft a packing checklist for the weekend trip"
+      ]
+    },
+    "compact": {
+      "title": "Démarrer une autre mission",
+      "placeholder": "Qu'aimeriez-vous accomplir ?",
+      "cta": "Commencer"
+    },
+    "transition": {
+      "phase1": "Je comprends votre objectif...",
+      "phase2": "Je construis votre mission...",
+      "phase3": "Je crée votre premier plan d'exécution...",
+      "phase4": "Presque prêt..."
+    },
+    "creationError": "Échec de la création de la mission",
+    "missions": {
+      "title": "Vos missions",
+      "status": "{activeCount} en cours{blockedCount, plural, =0 { · rien n'attend votre réponse} other { · # en attente de votre part}}",
+      "noActive": "Aucune mission active pour le moment.",
+      "completedAbandoned": "Terminées et abandonnées"
+    },
+    "recommends": "Atlas recommande"
+  },
+  "mission": {
+    "status": {
+      "active": "Active",
+      "completed": "Terminée",
+      "abandoned": "Abandonnée"
+    },
+    "hero": {
+      "readyToGo": "Prête à continuer",
+      "waitingForResponse": "En attente de votre réponse",
+      "wrappedUp": "Mission clôturée",
+      "needsInput": "Atlas a besoin de vous",
+      "currentFocus": "Focus actuel"
+    },
+    "decision": {
+      "workingOn": "Atlas travaille actuellement sur : {title}. Statut : {status}."
+    },
+    "why": {
+      "label": "Pourquoi : ",
+      "kicksOff": "Ceci lance la mission.",
+      "pickingUp": "Reprise là où vous vous étiez arrêté."
+    },
+    "card": {
+      "waitingOnYou": "En attente de vous",
+      "meta": "{count, plural, one {# mise à jour} other {# mises à jour}} · {time}"
+    },
+    "actions": {
+      "markComplete": "Marquer comme terminée",
+      "abandon": "Abandonner cette mission",
+      "updateFailed": "Échec de la mise à jour de la mission",
+      "confirmComplete": "Marquer cette mission comme terminée ?",
+      "confirmAbandon": "Abandonner cette mission ?",
+      "noteLabel": "Note (optionnelle)",
+      "notePlaceholder": "Ajoutez une note sur la façon dont ça s'est conclu...",
+      "confirm": "Confirmer",
+      "cancel": "Annuler",
+      "submitting": "Envoi en cours...",
+      "alreadyTerminal": "Cette mission est déjà terminée."
+    },
+    "timeline": {
+      "title": "Historique",
+      "started": "C'est ici que tout a commencé.",
+      "outcomeResolved": "Résolu",
+      "outcomeStillBlocked": "Toujours en attente",
+      "recommendationAccepted": "Recommandation acceptée",
+      "recommendationDeclined": "Recommandation refusée"
+    },
+    "updateInput": {
+      "heading": "Ajouter une mise à jour",
+      "placeholder": "Quoi de neuf sur cette mission ?",
+      "submit": "Mettre à jour la mission",
+      "submitting": "En cours...",
+      "workingLabel": "Mise à jour de votre mission...",
+      "updateFailed": "Échec de l'ajout de la mise à jour",
+      "answerPlaceholder": "Répondez ici...",
+      "answerSubmit": "Envoyer",
+      "missionNotActive": "Cette mission est déjà terminée."
+    },
+    "currentFocus": {
+      "needsField": "Atlas a besoin {field, select, dueDate {d'une date d'échéance} intent {de quelques précisions sur ce que vous essayez de faire} other {de plus d'informations}} pour continuer.",
+      "stillNeedsField": "Merci — Atlas a encore besoin {field, select, dueDate {d'une date d'échéance} intent {de quelques précisions sur ce que vous essayez de faire} other {de plus d'informations}} pour continuer.",
+      "nothingPending": "Rien en attente — prêt pour votre prochaine mise à jour.",
+      "gettingStarted": "Démarrage...",
+      "done": "Terminé.",
+      "doneAccepted": "Terminé — recommandation acceptée.",
+      "doneDeclined": "Terminé — un autre résultat a été enregistré.",
+      "abandoned": "Abandonnée.",
+      "missionCompleted": "Mission terminée.",
+      "missionAbandoned": "Mission abandonnée."
+    },
+    "outcome": {
+      "completedOn": "Terminée le {date}",
+      "abandonedOn": "Abandonnée le {date}",
+      "entryCompleted": "Mission terminée",
+      "entryAbandoned": "Mission abandonnée"
+    },
+    "verdictActions": {
+      "accept": "Accepter la recommandation",
+      "declineToggle": "Enregistrer un autre résultat",
+      "notePrompt": "Que s'est-il passé à la place ?",
+      "notePlaceholder": "ex. « J'ai acheté le produit C à la place »",
+      "confirm": "Enregistrer le résultat",
+      "cancel": "Annuler",
+      "submitting": "Envoi en cours...",
+      "error": "Échec de l'enregistrement de votre décision"
+    },
+    "journey": {
+      "title": "Parcours de la mission",
+      "progress": "{completed} terminée(s) / {active} active(s)",
+      "decisionNumber": "Décision {number}",
+      "expand": "Développer",
+      "collapse": "Réduire",
+      "status": {
+        "active": "Active",
+        "resolved": "Résolue",
+        "archived": "Abandonnée"
+      }
+    }
+  },
+  "decision": {
+    "status": {
+      "open": "Ouverte",
+      "collectingInformation": "Collecte d'informations",
+      "reasoning": "Analyse en cours",
+      "ready": "Prête",
+      "resolved": "Résolue",
+      "archived": "Archivée"
+    },
+    "evidence": {
+      "title": "Preuves",
+      "count": "{count, plural, =0 {Aucune preuve pour l'instant} one {# preuve} other {# preuves}}",
+      "insufficientEvidence": "Atlas a besoin de plus d'informations avant de faire une recommandation.",
+      "produced": "Atlas a une recommandation prête.",
+      "empty": "Rien n'a été enregistré pour l'instant.",
+      "claimLabel": "Que savez-vous ?",
+      "claimPlaceholder": "ex. « RBC propose des forfaits bancaires pour nouveaux arrivants »",
+      "sourceLabel": "Source",
+      "sourcePlaceholder": "ex. « rbc.com » ou « utilisateur »",
+      "add": "Ajouter une preuve",
+      "adding": "Ajout...",
+      "addFailed": "Échec de l'ajout de la preuve",
+      "normalized": {
+        "currency": "{amount} {currency}",
+        "currencyWithMeasure": "{amount} {currency} · {measure}",
+        "numeric": "{amount}",
+        "numericWithMeasure": "{amount} · {measure}",
+        "date": "{date}"
+      },
+      "measure": {
+        "price": "prix",
+        "budget": "budget",
+        "rent": "loyer",
+        "salary": "salaire",
+        "rating": "note",
+        "quality": "qualité",
+        "brand_score": "score de marque"
+      },
+      "why": {
+        "title": "Pourquoi ?"
+      },
+      "optionLabelBadge": "{optionLabel}",
+      "ranking": {
+        "title": "Classement",
+        "position": "{position}. {optionLabel}",
+        "score": "score {score}"
+      },
+      "structured": {
+        "toggle": "Ajouter une preuve structurée",
+        "optionLabelLabel": "Option",
+        "optionLabelPlaceholder": "ex. Nike Crew Neck",
+        "measureLabel": "Mesure",
+        "measureBlank": "Non précisé",
+        "valueLabel": "Valeur",
+        "currencyLabel": "Devise",
+        "currencyPlaceholder": "ex. « CAD »",
+        "observedAtLabel": "Date observée"
+      },
+      "fromMemory": {
+        "toggle": "Depuis vos souvenirs",
+        "empty": "Vous n'avez pas encore de souvenirs.",
+        "previewLabel": "Voici ce qui sera enregistré :",
+        "confirm": "Ajouter comme preuve",
+        "cancel": "Annuler"
+      },
+      "fromDocument": {
+        "toggle": "Depuis vos documents",
+        "empty": "Vous n'avez pas encore de documents.",
+        "excerptLabel": "Extrait",
+        "excerptPlaceholder": "Collez ou saisissez l'extrait exact à joindre",
+        "previewLabel": "Voici ce qui sera enregistré :",
+        "confirm": "Ajouter comme preuve",
+        "cancel": "Annuler"
+      },
+      "sourceDocument": "Depuis le document : {title}",
+      "sourceCalendar": "Depuis le calendrier : {title}",
+      "fromCalendar": {
+        "toggle": "Depuis votre calendrier",
+        "empty": "Aucun événement à venir dans votre calendrier.",
+        "previewLabel": "Voici ce qui sera enregistré :",
+        "confirm": "Ajouter comme preuve",
+        "cancel": "Annuler",
+        "reconnectRequired": "Votre connexion à Google Agenda doit être reconnectée.",
+        "unavailable": "Votre calendrier est temporairement indisponible. Veuillez réessayer plus tard."
+      },
+      "browser": {
+        "searchPlaceholder": "Rechercher...",
+        "noResults": "Aucun résultat.",
+        "loadMore": "Charger plus",
+        "loading": "Chargement..."
+      }
+    }
+  },
+  "opportunity": {
+    "title": "Opportunités",
+    "whileYoureHere": "Pendant que vous êtes ici",
+    "effortLow": "Effort faible",
+    "effortMedium": "Un peu d'effort",
+    "impactUnblocks": "Débloque cette mission",
+    "reasonWaitingOn": "En attente {field, select, dueDate {d'une date d'échéance} intent {de quelques précisions sur ce que vous essayez de faire} other {de plus d'informations}}."
+  },
+  "axis": {
+    "page": {
+      "title": "Axis",
+      "subtitle": "Accès brut au pipeline, en dehors de toute mission. Pour un usage courant, partez de l'accueil."
+    },
+    "input": {
+      "placeholder": "Try \"Remind me to call the bank tomorrow\" or \"Remember that I like oat milk\"",
+      "submit": "Envoyer à Axis",
+      "submitting": "Analyse en cours..."
+    },
+    "noResults": "Aucune requête pour le moment — essayez-en une ci-dessus.",
+    "parseFailed": "Échec de l'analyse de la requête",
+    "resultCard": {
+      "intent": "Intention",
+      "status": "Statut",
+      "module": "Module",
+      "due": "Échéance",
+      "atlasDecision": "Décision d'Atlas Brain"
+    },
+    "context": {
+      "used": "Contexte utilisé",
+      "firstInteraction": "(première interaction — aucun état préalable)",
+      "nothingRelevant": "Rien de pertinent trouvé pour l'instant.",
+      "memories": "Souvenirs :",
+      "openTasks": "Tâches ouvertes :",
+      "missions": "Missions :",
+      "untitled": "Sans titre"
+    },
+    "plan": {
+      "title": "Plan d'exécution",
+      "missing": "Manquant : {fields}"
+    },
+    "score": {
+      "title": "Score de confiance",
+      "intent": "Intention",
+      "entities": "Entités",
+      "routing": "Routage",
+      "plan": "Plan"
+    },
+    "learningSignals": "Signaux d'apprentissage"
+  },
+  "documents": {
+    "title": "Documents",
+    "subtitle": "Enregistrés depuis vos requêtes — jamais résumés, toujours vos propres mots.",
+    "empty": "Aucun document pour l'instant.",
+    "createdAt": "Enregistré {date}",
+    "searchPlaceholder": "Rechercher...",
+    "noResults": "Aucun résultat.",
+    "loadMore": "Charger plus",
+    "loading": "Chargement..."
+  },
+  "providers": {
+    "title": "Fournisseurs",
+    "subtitle": "Connexions externes qu'Atlas peut utiliser.",
+    "readOnlyNote": "Lecture seule — Atlas peut voir vos événements mais ne peut jamais en créer, modifier ou supprimer.",
+    "columns": {
+      "name": "Nom",
+      "id": "ID",
+      "status": "Statut",
+      "authType": "Type d'authentification",
+      "capabilities": "Capacités"
+    },
+    "status": {
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "connecting": "Connexion en cours",
+      "unavailable": "Indisponible"
+    },
+    "actions": {
+      "connect": "Connecter",
+      "disconnect": "Déconnecter"
+    },
+    "notices": {
+      "cancelled": "Connexion à Google Agenda annulée.",
+      "success": "Google Agenda connecté."
+    },
+    "errors": {
+      "config": "Google Agenda n'est pas encore configuré.",
+      "state": "Une erreur est survenue lors de la vérification de cette requête. Veuillez réessayer de vous connecter.",
+      "exchangeFailed": "Impossible de terminer la connexion à Google Agenda. Veuillez réessayer."
+    },
+    "googleCalendar": {
+      "sectionTitle": "Événements à venir",
+      "liveDataLabel": "Données en direct de votre Google Agenda."
+    },
+    "mockCalendar": {
+      "sectionTitle": "Calendrier fictif (développement uniquement)"
+    },
+    "events": {
+      "empty": "Aucun événement à venir.",
+      "untitled": "Événement sans titre",
+      "reconnectRequired": "L'accès à Google Agenda doit être reconnecté.",
+      "unavailable": "Google Agenda est temporairement indisponible."
+    },
+    "weather": {
+      "sectionTitle": "Météo actuelle",
+      "currentLocation": "Emplacement : {city}",
+      "noLocation": "Aucun emplacement configuré pour l'instant — définissez-en un ci-dessous pour voir la météo.",
+      "reading": "{temperatureC}°C, vent {windSpeedKmh} km/h",
+      "unavailable": "Les données météo sont temporairement indisponibles.",
+      "locationForm": {
+        "placeholder": "Nom de la ville",
+        "submit": "Définir l'emplacement",
+        "notFound": "Impossible de trouver cette ville. Essayez une autre orthographe ou une ville plus grande à proximité.",
+        "unavailable": "Impossible de rechercher cette ville pour le moment. Veuillez réessayer.",
+        "empty": "Entrez d'abord un nom de ville.",
+        "success": "Emplacement mis à jour."
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Comment Atlas Brain a raisonné.",
+    "axisRequests": "Requêtes Axis",
+    "avgConfidence": "Confiance moy.",
+    "mostActiveDomains": "Domaines les plus actifs",
+    "mostSuggestedModules": "Modules les plus suggérés",
+    "latestPlans": "Derniers plans",
+    "noPlansYet": "Aucun plan généré pour l'instant.",
+    "recentRequests": "Requêtes récentes",
+    "nothingYet": "Rien pour l'instant.",
+    "stepsCount": "{count, plural, one {# étape} other {# étapes}}"
+  },
+  "modules": {
+    "task": "Tâche",
+    "memory": "Mémoire",
+    "document": "Document",
+    "shopping": "Shopping",
+    "conversation": "Conversation",
+    "unknown": "Inconnu"
+  },
+  "automation": {
+    "manual": "Manuel",
+    "assisted": "Assisté",
+    "automatic": "Automatique"
+  },
+  "planStep": {
+    "createTask": "Créer la tâche « {title} »",
+    "askDueDate": "Demander une date d'échéance à l'utilisateur",
+    "storeMemory": "Enregistrer le souvenir : « {title} »",
+    "saveDocument": "Enregistrer le document : « {title} »",
+    "compareShoppingOptions": "Comparer les options : « {title} »",
+    "answerQuestion": "Répondre directement à la question",
+    "clarifyRequest": "Demander des précisions à l'utilisateur",
+    "initState": "Initialiser l'état Atlas pour cet utilisateur"
+  },
+  "routingReasoning": {
+    "task": "Phrase de création de tâche détectée : le module Tâche va créer une nouvelle tâche{hasDueDate, select, yes { (échéance : {dueDate})} other {}}.{isDuplicate, select, yes { Une tâche ouverte portant le même titre existe déjà, la confiance est donc réduite.} other {}}",
+    "memory": "Déclaration sur l'utilisateur détectée : Atlas Brain va l'enregistrer comme un souvenir.",
+    "document": "Demande d'enregistrement détectée : le module Document va créer une note.",
+    "shopping": "Demande de comparaison détectée : le module Shopping va comparer les options nommées.",
+    "conversation": "Question détectée : le module Conversation va y répondre directement.",
+    "unknown": "Aucun module ne correspond à cette requête avec suffisamment de confiance : Atlas Brain va demander des précisions."
+  },
+  "axisSummary": {
+    "task": "Créer une tâche : « {subject} »{hasDueDate, select, yes { (échéance : {dueDate})} other {}}",
+    "memory": "Se souvenir : « {subject} »",
+    "document": "Enregistrer un document : « {subject} »",
+    "shopping": "Comparer les options : « {subject} »",
+    "conversation": "Répondre à la question : « {subject} »",
+    "unknown": "Requête non reconnue : « {subject} »"
+  },
+  "verdict": {
+    "findLowestValue": {
+      "recommendationCurrency": "D'après les preuves disponibles, « {claim} » présente actuellement la valeur observée la plus basse : {value} {currency}.",
+      "recommendationNumeric": "D'après les preuves disponibles, « {claim} » présente actuellement la valeur observée la plus basse : {value}.",
+      "reasoning": "{count, plural, one {# preuve comparable prise en compte.} other {# preuves comparables prises en compte.}}"
+    },
+    "compareOptions": {
+      "recommendation": "{optionLabel} arrive en tête.",
+      "reasoning": "{count, plural, one {Comparaison sur # option.} other {Comparaison sur # options.}}"
+    }
+  }
+}

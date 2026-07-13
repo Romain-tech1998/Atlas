@@ -1,0 +1,528 @@
+// Atlas — Prisma schema
+// Prisma 7 uses the `prisma-client` generator; the client is generated into
+// src/generated/prisma and the connection URL is read from prisma.config.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth.js (NextAuth) required models
+// ---------------------------------------------------------------------------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Atlas domain models
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  memories       Memory[]
+  axisRequests   AxisRequest[]
+  learningSignals LearningSignal[]
+  missions       Mission[]
+  decisions      Decision[]
+  evidence       Evidence[]
+  verdicts       Verdict[]
+  tasks          Task[]
+  documents      Document[]
+  atlasState     AtlasState?
+  externalConnections ExternalConnection[]
+  location       UserLocation?
+}
+
+enum MemoryType {
+  FACT
+  PREFERENCE
+  EVENT
+  CONTEXT
+}
+
+/// Atlas Brain's long-term memory store: durable facts and context about a
+/// user, used to enrich future Axis parsing.
+model Memory {
+  id         String     @id @default(cuid())
+  userId     String
+  type       MemoryType
+  content    String
+  importance Int        @default(50)
+  source     String     @default("axis")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum AxisStatus {
+  PENDING
+  PARSED
+  FAILED
+}
+
+/// A user's raw request transformed into a structured, actionable object.
+model AxisRequest {
+  id               String     @id @default(cuid())
+  userId           String
+  missionId        String?
+  /// The atomic Decision (RFC-0001 §4) this request addresses. Nullable for
+  /// requests saved before Decision existed; every new request that's part
+  /// of a Mission gets one going forward.
+  decisionId       String?
+  rawInput         String
+  status           AxisStatus @default(PENDING)
+  intent           String?
+  module           String?
+  confidence       Float?
+  entities         Json?
+  summary          String?
+  /// Snapshot of the ContextBundle the Context Engine assembled for this request.
+  contextSnapshot  Json?
+  /// The ExecutionPlan produced by the Planning Engine.
+  executionPlan    Json?
+  /// The ScoreBreakdown produced by the Scoring Engine.
+  scoreBreakdown   Json?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission         Mission?         @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  decision        Decision?        @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  /// Atlas Brain's routing decision for this request — an unrelated, much
+  /// older model name (predates RFC-0001 §4's "Decision" concept). Not
+  /// renamed in this sprint to avoid an unrelated churn; see the Decision
+  /// model below for the RFC-0001 concept.
+  decisions       AxisDecision[]
+  learningSignals LearningSignal[]
+  tasks           Task[]
+  documents       Document[]
+
+  @@index([userId])
+  @@index([missionId])
+  @@index([decisionId])
+}
+
+/// Atlas Brain's routing decision for an AxisRequest: which module should
+/// handle it, what action to take, and why.
+model AxisDecision {
+  id                String   @id @default(cuid())
+  axisRequestId     String
+  chosenModule      String
+  suggestedModules  String[] @default([])
+  action            String
+  reasoning         String
+  confidence        Float
+  createdAt         DateTime @default(now())
+
+  axisRequest AxisRequest @relation(fields: [axisRequestId], references: [id], onDelete: Cascade)
+
+  @@index([axisRequestId])
+}
+
+enum LearningSignalType {
+  REQUEST_CREATED
+  INTENT_DETECTED
+  ENTITY_EXTRACTED
+  CONTEXT_USED
+  MODULE_SUGGESTED
+  PLAN_GENERATED
+  USER_FEEDBACK_POSITIVE
+  USER_FEEDBACK_NEGATIVE
+  USER_MODIFIED_OUTPUT
+  USER_ABANDONED_FLOW
+  /// A mission update resolved the blocker Atlas was waiting on.
+  MISSION_BLOCKER_RESOLVED
+  /// A mission update arrived while the mission wasn't blocked on anything.
+  MISSION_UPDATE_UNRELATED
+  /// A mission update was answered but the mission is still blocked
+  /// (same or different missing field).
+  MISSION_STILL_BLOCKED
+  /// A new Evidence item was recorded against a Decision. Not tied to a
+  /// pipeline run (no AxisRequest), so signals of this type are recorded
+  /// with a null axisRequestId — see learningRepository.saveSignals.
+  EVIDENCE_ADDED
+  /// The user explicitly accepted a PRODUCED Verdict's recommendation
+  /// (Sprint-017, RFC-0001 §4 "Verdict Acceptance"). Not tied to a pipeline
+  /// run — recorded with a null axisRequestId, same as EVIDENCE_ADDED.
+  VERDICT_ACCEPTED
+  /// The user explicitly recorded that a different outcome happened
+  /// instead of the recommendation (Sprint-017) — the Decision still
+  /// resolves, but never automatically, and the Verdict itself is never
+  /// revised. Same null-axisRequestId convention as VERDICT_ACCEPTED.
+  VERDICT_DECLINED
+}
+
+/// Feedback captured to improve future parsing/routing decisions.
+model LearningSignal {
+  id            String             @id @default(cuid())
+  userId        String
+  axisRequestId String?
+  signalType    LearningSignalType
+  payload       Json?
+  createdAt     DateTime           @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  axisRequest AxisRequest? @relation(fields: [axisRequestId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+enum MissionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+/// A persistent goal the user is trying to accomplish, grouping every
+/// AxisRequest made toward it. Set once at creation from the founding
+/// request's summary; not renamed as the mission evolves.
+model Mission {
+  id        String        @id @default(cuid())
+  userId    String
+  /// The user's original raw intention, verbatim (e.g. "Plan my trip to Tokyo").
+  goal      String
+  /// Short display title, derived once from the founding AxisRequest's summary.
+  title     String?
+  status    MissionStatus @default(ACTIVE)
+  /// Sprint-020 (RFC-0001 §4 "Mission Completion Semantics"): set exactly
+  /// once, only when an explicit user action transitions the Mission to
+  /// COMPLETED/ABANDONED — never inferred, never set for ACTIVE Missions.
+  /// Null for every Mission that predates this sprint, even if already
+  /// terminal — rendered honestly as "no recorded date", never backfilled.
+  outcomeAt DateTime?
+  /// The user's optional free-text note captured alongside that same
+  /// transition — trimmed, empty string persisted as null. Never an
+  /// AI-authored summary (RFC-0001 §4).
+  outcomeNote String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  axisRequests AxisRequest[]
+  decisions    Decision[]
+
+  @@index([userId])
+}
+
+/// RFC-0001 §4's lifecycle for a Decision. Sprint-003 only ever drives a
+/// Decision through OPEN -> COLLECTING_INFORMATION -> RESOLVED/ARCHIVED —
+/// REASONING and READY exist for forward-compatibility with the future
+/// Verdict engine (Sprint-004) but nothing sets them yet, since nothing in
+/// Atlas Brain today actually reasons about options.
+enum DecisionStatus {
+  OPEN
+  COLLECTING_INFORMATION
+  REASONING
+  READY
+  RESOLVED
+  ARCHIVED
+}
+
+/// An atomic choice Atlas is helping resolve inside a Mission (RFC-0001
+/// §4), e.g. "which bank?". Sprint-003 scope: exactly one Decision per
+/// Mission, created atomically with it. The model carries its own
+/// `missionId` (same shape as `AxisRequest.missionId` today) so a Mission
+/// can hold multiple concurrent Decisions later without a rewrite — but
+/// nothing yet decides when a second Decision should exist (see RFC-0001
+/// §11); that's a planning-capability gap, not a schema one.
+///
+/// No Verdict field: a Verdict isn't implemented until Sprint-004, and a
+/// nullable placeholder column that's always null this sprint would just
+/// be dead weight. "Not yet RESOLVED" already means "no Verdict yet".
+model Decision {
+  id        String         @id @default(cuid())
+  userId    String
+  missionId String
+  /// Short display title, derived once from the founding AxisRequest's
+  /// summary — same pattern as Mission.title. In Sprint-003's one-Decision
+  /// scope this mirrors the Mission's own title.
+  title     String?
+  status    DecisionStatus @default(OPEN)
+  /// Sprint-017 (RFC-0001 §4 "Verdict Acceptance"): set exactly once, only
+  /// when RESOLVED is reached via an explicit user accept/decline action —
+  /// never set by a Verdict becoming PRODUCED on its own, and never by any
+  /// other path to RESOLVED (e.g. `missionService.setMissionStatus`, which
+  /// predates this sprint and stays null here). Additive/nullable so every
+  /// existing RESOLVED Decision just reads as "resolved before this existed".
+  resolutionOutcome DecisionResolutionOutcome?
+  /// The user's free-text account of what happened instead — populated
+  /// only alongside `resolutionOutcome: DECLINED`. Never fabricated into
+  /// Evidence, never fed back into any Skill (RFC-0001 §4).
+  resolutionNote    String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission      Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  axisRequests AxisRequest[]
+  evidence     Evidence[]
+  verdict      Verdict?
+
+  @@index([userId])
+  @@index([missionId])
+}
+
+/// Sprint-017 (RFC-0001 §4 "Verdict Acceptance"): the two ways a user can
+/// explicitly resolve a Decision once its Verdict is PRODUCED. Never set
+/// automatically — no timeout, no inferred acceptance.
+enum DecisionResolutionOutcome {
+  ACCEPTED
+  DECLINED
+}
+
+/// A single factual item attached to a Decision that a Verdict can point to
+/// (RFC-0001 §4) — e.g. "Product A costs $899 at Best Buy", "User said
+/// budget is $25,000". Evidence is what makes a Verdict a supported
+/// recommendation instead of an opinion. Sprint-004 scope: Evidence is
+/// recorded manually via user input only — no external data providers, no
+/// web search, no comparison engine yet.
+model Evidence {
+  id         String   @id @default(cuid())
+  userId     String
+  decisionId String
+  /// The factual claim itself, e.g. "RBC offers newcomer banking packages".
+  claim      String
+  /// Where this fact came from, e.g. "user", "rbc.com".
+  source     String
+  /// When the fact was true/observed — may predate createdAt (e.g. a price
+  /// checked yesterday, entered today). Sprint-004's minimal add-evidence
+  /// form doesn't expose this as its own input yet; it defaults to "now".
+  observedAt DateTime
+  createdAt  DateTime @default(now())
+  /// Optional free-form structured detail (e.g. { price: 899, currency:
+  /// "USD" }) — never required to make sense of `claim` on its own.
+  metadata   Json?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decision Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([decisionId])
+}
+
+/// Sprint-004 scope: nothing in Atlas Brain can compare options or reason
+/// over Evidence yet, so no code path in this sprint ever sets PRODUCED —
+/// it exists only for forward-compatibility with the real recommendation
+/// engine (Sprint-005+). Deliberately distinct from DecisionStatus's own
+/// READY/RESOLVED values above — this is a different state machine
+/// (Verdict readiness, not Decision progress) and reusing those names here
+/// would create two different things both called "READY" a few lines apart.
+enum VerdictStatus {
+  INSUFFICIENT_EVIDENCE
+  PRODUCED
+}
+
+/// The outcome Atlas produces for a Decision (RFC-0001 §4): a
+/// recommendation, its reasoning, and how well-supported it is by
+/// Evidence. At most one Verdict per Decision (`decisionId` is unique) —
+/// created eagerly alongside its Decision, same as Sprint-003 made Decision
+/// creation atomic with Mission. Sprint-004 scope: every Verdict stayed at
+/// INSUFFICIENT_EVIDENCE with recommendation/reasoning left null —
+/// populating them with placeholder text just to fill the shape would have
+/// been exactly the fabricated-work the product doctrine forbids. Sprint-006
+/// is the first sprint allowed to set PRODUCED, and only ever via the
+/// `find_lowest_value` Skill's deterministic result (`evidenceService`) —
+/// never a guess.
+model Verdict {
+  id         String        @id @default(cuid())
+  userId     String
+  decisionId String        @unique
+  status     VerdictStatus @default(INSUFFICIENT_EVIDENCE)
+  /// The recommendation itself, e.g. "RBC". JSON-encoded LocalizedText,
+  /// same convention as Mission.title/Decision.title. Null while
+  /// INSUFFICIENT_EVIDENCE — always the case in Sprint-004.
+  recommendation String?
+  /// Why, e.g. "chosen for lower fees and branch proximity". Same
+  /// LocalizedText convention. Null while INSUFFICIENT_EVIDENCE.
+  reasoning  String?
+  /// Deliberately NOT named `confidence` — must never be confused with, or
+  /// computed from, scoringEngine's parsing-stage confidence (RFC-0001
+  /// §4/§5's "parsing confidence vs. recommendation confidence" rule).
+  /// Measures how much Evidence backs this Verdict — never whether the
+  /// recommendation is likely to be correct. Null with zero Evidence ("not
+  /// applicable yet" — 0 could misread as "0% confident", itself a
+  /// fabricated-precision claim). See domain/decision.ts's
+  /// computeEvidenceCoverage for the exact (deliberately simple,
+  /// placeholder-quality) formula, and evidenceService for where this is
+  /// computed. Never rendered in the UI as a percentage/confidence value.
+  evidenceCoverage Float?
+  /// Sprint-006 addition: the Evidence ids the `find_lowest_value` Skill
+  /// actually compared to produce this Verdict — a JSON array of Evidence
+  /// ids, or null while INSUFFICIENT_EVIDENCE. Exists so traceability
+  /// (RFC-0001 §4) survives a page reload, not just a single render:
+  /// without persisting this, a reloaded page would have no way to
+  /// re-show *which* Evidence justified a PRODUCED Verdict without
+  /// recomputing (and this sprint's pattern, like Sprint-004's
+  /// evidenceCoverage, is to persist on write and read back what was
+  /// persisted, not recompute on every read).
+  comparedEvidenceIds Json?
+  /// Sprint-030: the `compare_options` Skill's per-option scores — a JSON
+  /// array of `{ optionLabel, score }`, or null whenever the Verdict came
+  /// from `find_lowest_value` instead (including every Verdict that
+  /// predates this sprint). Same persist-on-write, read-back-don't-recompute
+  /// pattern as `comparedEvidenceIds`.
+  ranking Json?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decision Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+/// Output of the Task module: an actionable item derived from an AxisRequest.
+model Task {
+  id            String     @id @default(cuid())
+  userId        String
+  axisRequestId String?
+  title         String
+  description   String?
+  status        TaskStatus @default(TODO)
+  dueDate       DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  axisRequest AxisRequest? @relation(fields: [axisRequestId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+/// Atlas State Engine's snapshot of a user's current state: active domains,
+/// priorities, preferences, and active projects, updated as Axis requests
+/// come in.
+model AtlasState {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  /// Domain (module id) -> interaction count, e.g. { "task": 3, "memory": 1 }.
+  activeDomains     Json      @default("{}")
+  priorities        String[]  @default([])
+  /// Free-form key/value facts extracted from memory-type requests.
+  preferences       Json      @default("{}")
+  activeProjects    String[]  @default([])
+  openTaskCount     Int       @default(0)
+  lastInteractionAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Sprint-027: the first real piece of user-owned context a Provider
+/// consumes. Set via a plain settings-style form (`/api/user-location`),
+/// never through Atlas Brain/Axis — see RFC-0003 §8f. One row per user,
+/// mirrors `AtlasState`'s own shape exactly (`userId String @unique`,
+/// upserted, no separate create/update branching in the caller).
+model UserLocation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  city      String
+  latitude  Float
+  longitude Float
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ExternalConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+/// An Atlas user's authorization grant to one external Provider (RFC-0003
+/// §8b/§8c). Distinct from Auth.js's adapter-owned `Account` model — see
+/// §8c for why. Never stores Provider data itself (e.g. calendar events),
+/// only the authorization to fetch it.
+model ExternalConnection {
+  id                    String                   @id @default(cuid())
+  userId                String
+  providerId            String
+  status                ExternalConnectionStatus @default(DISCONNECTED)
+  encryptedAccessToken  String?                  @db.Text
+  encryptedRefreshToken String?                  @db.Text
+  accessTokenExpiresAt  DateTime?
+  grantedScopes         Json?
+  providerAccountId     String?
+  lastErrorCode         String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerId])
+  @@index([userId])
+}
+
+/// Output of the Document module: a note or file derived from an AxisRequest.
+model Document {
+  id            String   @id @default(cuid())
+  userId        String
+  axisRequestId String?
+  title         String
+  content       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  axisRequest AxisRequest? @relation(fields: [axisRequestId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}

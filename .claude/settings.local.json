@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I{} dirname {})",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)"
+    ]
+  }
+}
