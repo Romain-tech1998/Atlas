@@ -23,6 +23,15 @@ jobs:
 
       - run: npx prisma generate
 
+      # `tsc --noEmit` needs Next.js's ambient PageProps/RouteContext types
+      # (.next/types/*.d.ts), which only exist after a build or dev run has
+      # generated them at least once. Locally that's always already true
+      # (.next/ persists across sessions); a fresh CI checkout has no
+      # .next/ at all (gitignored), so typecheck fails without this unless
+      # something generates those types first. `next typegen` does exactly
+      # that without paying for a full production build.
+      - run: npx next typegen
+
       - run: npm run typecheck
 
       - run: npm run lint
