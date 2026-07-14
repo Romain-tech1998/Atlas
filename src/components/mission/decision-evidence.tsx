@@ -8,6 +8,11 @@ import type { AttachableMemory, AttachableDocument, InternalEvidencePage } from 
 
 interface DecisionEvidenceProps {
   decisionId: string;
+  /** Sprint-034: the Decision's own title, already resolved to a plain
+   * string server-side (`renderLocalized`) — the `subject` sent to
+   * `research_market_options` when the user presses "Research real
+   * options" in `EvidenceForm`. */
+  decisionTitle: string;
   evidence: EvidenceItem[];
   verdict: VerdictSummary;
   /** Sprint-009: the user's own Memory entries, offered as a third,
@@ -88,6 +93,28 @@ function getOptionLabel(metadata: unknown): string | null {
   return typeof label === "string" ? label : null;
 }
 
+/** Sprint-034: the small fixed default RFC-0003 §8g leaves as this
+ * sprint's own implementation decision when a Decision has no Evidence
+ * yet to imply criteria from. */
+const DEFAULT_RESEARCH_CRITERIA = ["price", "rating"];
+
+/** Whatever recognized measures this Decision's Evidence already uses —
+ * the criteria `research_market_options` is asked to score options
+ * against, so a fresh research call stays consistent with what's already
+ * been entered by hand. Falls back to a small fixed default only when
+ * nothing has been recognized yet. */
+function deriveResearchCriteria(evidence: EvidenceItem[]): string[] {
+  const measures = new Set<string>();
+  for (const item of evidence) {
+    for (const value of normalizeEvidence(item)) {
+      if ((value.kind === "numeric" || value.kind === "currency") && value.measure) {
+        measures.add(value.measure);
+      }
+    }
+  }
+  return measures.size > 0 ? [...measures] : DEFAULT_RESEARCH_CRITERIA;
+}
+
 /** One Evidence item's claim/source and its normalized-value badges. Shared
  * by the full Evidence list and (Sprint-006) the "Why?" section's filtered
  * list, so the two never drift into two different presentations of the
@@ -141,6 +168,7 @@ function EvidenceRow({ item, t }: { item: EvidenceItem; t: EvidenceTranslator })
  */
 export async function DecisionEvidence({
   decisionId,
+  decisionTitle,
   evidence,
   verdict,
   initialMemories,
@@ -148,6 +176,7 @@ export async function DecisionEvidence({
 }: DecisionEvidenceProps) {
   const t = await getTranslations("decision.evidence");
   const tRoot = await getTranslations();
+  const researchCriteria = deriveResearchCriteria(evidence);
 
   const comparedEvidenceIds = verdict.comparedEvidenceIds;
   const comparedEvidence = comparedEvidenceIds
@@ -208,6 +237,8 @@ export async function DecisionEvidence({
 
       <EvidenceForm
         decisionId={decisionId}
+        decisionSubject={decisionTitle}
+        researchCriteria={researchCriteria}
         initialMemories={initialMemories}
         initialDocuments={initialDocuments}
       />

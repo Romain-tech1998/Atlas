@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { missionService } from "@/services/missionService";
 import { opportunityService } from "@/services/opportunityService";
 import { evidenceService } from "@/services/evidenceService";
+import { renderLocalized } from "@/i18n/render";
 import { MissionHero } from "@/components/mission/mission-hero";
 import { MissionTimeline } from "@/components/mission/mission-timeline";
 import { MissionActions } from "@/components/mission/mission-actions";
@@ -66,6 +67,7 @@ export default async function MissionPage(props: PageProps<"/missions/[id]">) {
       <>
         <DecisionEvidence
           decisionId={activeDecision.id}
+          decisionTitle={renderLocalized(t, activeDecision.title)}
           evidence={evidenceAndVerdict.evidence}
           verdict={evidenceAndVerdict.verdict}
           initialMemories={initialMemories}

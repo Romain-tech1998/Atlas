@@ -662,33 +662,56 @@ output is a decision *about* modules, never logic written *for* one.
   reconciling Skill" shape, or some other Module needs a genuinely
   different reconciliation mechanism, remains open until a second Module
   exists to compare against.
-- **Should Atlas Brain evolve from deterministic rule-based engines into a
-  genuine learning/reasoning AI?** As of Sprint-029, every Atlas Brain
-  engine (intent, entity, routing, planning, scoring, learning —
-  [§7](#7-what-belongs-in-atlas-brain)) is deterministic and rule-based —
-  no LLM, no inference, no guessing, a discipline held without exception
-  since Sprint-002. The product vision (recorded 2026-07-13, from Romain)
-  goes further: Atlas Brain should understand purchasing behavior — and
-  user behavior generally — across every parameter of a user's life,
-  retain and reason over that understanding, and function as a genuine
-  standalone intelligence rather than a fixed rule set ("un cerveau à part
-  entière"). This is not a small extension of the current architecture —
-  it's a different reasoning substrate underneath the same responsibilities
-  §7 already assigns Atlas Brain. Notably, the *data* this vision would
-  reason over already exists and is already being collected: `AtlasState`
-  (`activeDomains`, `priorities`, `preferences`, `activeProjects`) and
-  `LearningSignal` (every interaction outcome, since Sprint-002) are both
-  populated on every request today — nothing new needs to be built to
-  start capturing the substrate. What's genuinely undecided is the
-  reasoning layer on top of it, and how it would coexist with (or
-  eventually replace) today's deterministic engines. RFC-0003 §10 already
-  asks a version of this question from the Skill side ("How should
-  LLM-backed Skills be tested deterministically, given Atlas Brain's own
-  engines are deliberately deterministic mocks today?") — this is the
-  Atlas-Brain-level version of the same fork. **Explicitly not in scope for
-  Sprint-029/030** — Shopping's four Agents stay fully deterministic (RFC-0003
-  §7a). Recorded here so the vision isn't lost, to be taken on as its own
-  dedicated architecture review once the product is ready for it.
+- ~~**Should Atlas Brain evolve from deterministic rule-based engines into a
+  genuine learning/reasoning AI?**~~ **Partially resolved 2026-07-14.** The
+  dedicated architecture review this question was deferred to (previous
+  paragraph, recorded 2026-07-13) happened once Sprint-033 proved the
+  Module pattern generalizes and the product moved into a consolidation
+  phase. Romain's framing of the problem: without any connection to the
+  real world, Atlas Brain has internal structuring and internal reasoning
+  but produces zero *correct* answers — and hand-building a dedicated
+  Provider per external data source (a product-search API, a flight-search
+  API, a hotel-search API, ...) doesn't scale ("il faudrait connecter 1
+  milliard de providers"). His resolution: keep Atlas Brain's own
+  reasoning as the deterministic, personal-reflection layer it already
+  is — that's what makes a Decision *this user's* Decision, traceable and
+  never a black box — and use a real LLM specifically as the thing that
+  goes and fetches real-world information, not as a replacement for
+  Atlas Brain's own structuring.
+
+  Concretely, this is **narrower than "Atlas Brain becomes an LLM"** and
+  fits entirely inside the architecture that already exists, adding
+  nothing new above the Provider layer: a real LLM (Claude, via the
+  Anthropic API) is registered as one more `Provider` —
+  `authType: "api_key"` already exists in `Provider`'s type for exactly
+  this shape, unused until now — consumed only by Skills, exactly like
+  Google Calendar and Open-Meteo. `intentEngine`/`entityEngine`/
+  `routingEngine`/`planningEngine`/`scoringEngine`/`learningEngine`
+  ([§7](#7-what-belongs-in-atlas-brain)) are **untouched** — no LLM call
+  anywhere inside Atlas Brain's own pipeline, no exception to the
+  deterministic discipline held since Sprint-002. The LLM answers one
+  narrow question when a Skill asks it to ("what are real flight options
+  from X to Y", "what does document Z's content say about Q") and returns
+  structured Evidence-shaped output — it never decides intent, routing, or
+  what a Verdict should be; those stay exactly as deterministic as they
+  are today. See [RFC-0003 §8g](./RFC-0003-Skill-System.md#8g-ai-provider--information-retrieval-sprint-034)
+  for the concrete architecture.
+
+  **Still open, deliberately not resolved by this decision:** whether
+  Atlas Brain's own engines ever gain a learning/reasoning substrate on
+  top of `AtlasState`/`LearningSignal` (the original, broader vision from
+  2026-07-13) remains a separate, larger question — this resolution only
+  settles "how does Atlas get real-world answers," not "does Atlas Brain
+  itself become an AI." The data substrate note from the original entry
+  still stands and is preserved below for that still-open half of the
+  question.
+
+  > Notably, the *data* the broader vision would reason over already
+  > exists and is already being collected: `AtlasState` (`activeDomains`,
+  > `priorities`, `preferences`, `activeProjects`) and `LearningSignal`
+  > (every interaction outcome, since Sprint-002) are both populated on
+  > every request today — nothing new needs to be built to start
+  > capturing the substrate, whenever that separate question is taken up.
 - ~~Is a Verdict always produced (with `not_enough_data` as a valid verdict,
   per earlier product exploration), or only once a Decision has enough
   signal to recommend something?~~ **Resolved 2026-07-09:** yes — a

@@ -15,6 +15,14 @@ import type { CalendarEventForEvidence, CalendarEventsResponse } from "@/app/api
 
 interface EvidenceFormProps {
   decisionId: string;
+  /** Sprint-034: the Decision's own title, already resolved to a plain
+   * string server-side — the `subject` sent to `research_market_options`. */
+  decisionSubject: string;
+  /** Sprint-034: the criteria to score researched options against —
+   * whatever measures this Decision's Evidence already implies, or a
+   * small fixed default when there's none yet (`decision-evidence.tsx`'s
+   * `deriveResearchCriteria`). */
+  researchCriteria: string[];
   /** Sprint-009 Path C, Sprint-012 browsing: the first page of the user's
    * own Memory entries — the shared browser fetches further pages itself
    * via `/api/memories` as the user searches or clicks "Load more". */
@@ -63,7 +71,13 @@ async function fetchJsonPage<T>(url: string, query: string, offset: number): Pro
  * built, just relocated into a render function; nothing about
  * confirmation, validation, or persistence changed.
  */
-export function EvidenceForm({ decisionId, initialMemories, initialDocuments }: EvidenceFormProps) {
+export function EvidenceForm({
+  decisionId,
+  decisionSubject,
+  researchCriteria,
+  initialMemories,
+  initialDocuments,
+}: EvidenceFormProps) {
   const router = useRouter();
   const t = useTranslations("decision.evidence");
   const tCommon = useTranslations("common");
@@ -76,6 +90,7 @@ export function EvidenceForm({ decisionId, initialMemories, initialDocuments }: 
   const [value, setValue] = useState("");
   const [currency, setCurrency] = useState("");
   const [observedAt, setObservedAt] = useState("");
+  const [isResearching, setIsResearching] = useState(false);
   const [showMemoryPicker, setShowMemoryPicker] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState<AttachableMemory | null>(null);
   const [showDocumentPicker, setShowDocumentPicker] = useState(false);
@@ -136,6 +151,47 @@ export function EvidenceForm({ decisionId, initialMemories, initialDocuments }: 
     if (optionLabel.trim().length > 0) body.optionLabel = optionLabel.trim();
 
     if (await postEvidence(body)) resetForm();
+  }
+
+  /** Sprint-034 (RFC-0003 §8g): the explicit, cost-gated trigger for
+   * `research_market_options` — an AI API call costs real money per
+   * invocation, so this only ever runs from this one deliberate button
+   * press, never automatically on page load or alongside any other
+   * submission. `addedOptions === 0` is a genuinely different outcome
+   * from a network/auth failure: it means the search ran but found
+   * nothing groundable, and is reported to the user as exactly that,
+   * not as an error. */
+  async function handleResearch() {
+    if (isResearching) return;
+    setIsResearching(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/decisions/${decisionId}/research`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: decisionSubject, criteria: researchCriteria }),
+      });
+      const responseBody = await response.json().catch(() => null);
+      if (!response.ok) {
+        const code = responseBody?.error;
+        const message =
+          code === "unauthorized"
+            ? t("research.unauthorized")
+            : code === "unavailable"
+              ? t("research.unavailable")
+              : t("addFailed");
+        throw new Error(message);
+      }
+      if (responseBody?.addedOptions === 0) {
+        setError(t("research.noneFound"));
+      } else {
+        router.refresh();
+      }
+    } catch (researchError) {
+      setError(researchError instanceof Error ? researchError.message : tCommon("somethingWentWrong"));
+    } finally {
+      setIsResearching(false);
+    }
   }
 
   async function handleAttachMemory() {
@@ -307,6 +363,19 @@ export function EvidenceForm({ decisionId, initialMemories, initialDocuments }: 
               onChange={(event) => setObservedAt(event.target.value)}
               disabled={isSubmitting}
             />
+          </div>
+          <div className="col-span-2 flex flex-col gap-1 sm:col-span-5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isResearching}
+              onClick={handleResearch}
+              className="self-start"
+            >
+              {isResearching ? t("research.searching") : t("research.trigger")}
+            </Button>
+            <p className="text-muted-foreground text-xs">{t("research.hint")}</p>
           </div>
         </div>
       ) : null}

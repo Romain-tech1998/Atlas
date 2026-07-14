@@ -778,6 +778,80 @@ is no `ExecutionPlan` on this path to gate against, and none is needed: the
 gate is the user having explicitly submitted the form, the same authority
 an explicit Provider connect/disconnect action already carries.
 
+## 8g. AI Provider — Information Retrieval (Sprint-034)
+
+Resolves RFC-0001 §11's AI question: not by giving Atlas Brain an LLM, but
+by giving Skills one more Provider — the first to actually use
+`authType: "api_key"`, a shape `Provider`'s type has carried unused since
+§8b. The problem this section exists to solve, in Romain's own framing:
+Atlas Brain can structure and reason about a request perfectly and still
+produce zero *correct* answers, because nothing today connects it to
+real-world information — and hand-building a dedicated Provider per
+external data source (a product-search API, a flight-search API, a
+hotel-search API, and everything after that) doesn't scale.
+
+**The AI Provider is a Provider like any other, consumed only by Skills.**
+`AnthropicAIProvider` (or similar), `capabilities: ["information:retrieve"]`,
+`authType: "api_key"`, registered and resolved exactly like
+`WeatherProvider`/`CalendarProvider` — no change to `provider.ts` or
+`providerRegistry.ts` expected, the same "the abstraction already
+anticipated this" finding §8e made for Open-Meteo. `ANTHROPIC_API_KEY`
+joins `.env.example` alongside the other credential-shaped vars
+(`GOOGLE_CALENDAR_CLIENT_SECRET`, etc.).
+
+**Exactly one new Skill this sprint: a market-research Skill** (working
+name `research_market_options`), `sideEffects: "external"`. Given a
+subject and a small set of comparison criteria, it asks the AI Provider to
+find real, named, current options and returns them in the same
+`claim`/`source`/`metadata` shape `evidenceService.addEvidence` already
+accepts — an AI-sourced option is Evidence like any other, subject to the
+exact same `normalizeEvidence`/`compare_options` machinery, never a
+special-cased "AI verdict" that bypasses RFC-0001 §4's traceability rule.
+This is what actually unblocks the two discovery items §7a and §7b both
+deferred: Shopping's "recommend me a t-shirt" without the user naming
+candidates first, and Travel's real flight/hotel search — both were
+blocked on sourcing a dedicated commercial API per vertical; a general
+information-retrieval Provider removes that per-vertical dependency
+entirely, which is the direct answer to "1 milliard de providers."
+
+**What does not change: every Atlas Brain engine.** `intentEngine`,
+`entityEngine`, `routingEngine`, `planningEngine`, `scoringEngine`,
+`learningEngine` ([RFC-0001 §7](./RFC-0001-Atlas-Core-Architecture.md#7-what-belongs-in-atlas-brain))
+gain no LLM call, no new dependency on this Provider, no exception to the
+deterministic discipline held since Sprint-002. The AI Provider is invoked
+from inside a Skill, the same architectural position Google Calendar and
+Open-Meteo already occupy — Atlas Brain decides *that* a Decision needs
+more Evidence and *which* Skill to call (both stay fully deterministic);
+the Skill decides how to go get it, and an LLM-backed Provider is simply
+one way a Skill can do that, same as a database read or an HTTP call to
+Open-Meteo is another.
+
+**A genuinely new consideration this Provider introduces: real per-call
+cost.** Every Provider before this one was either free (`Open-Meteo`,
+`authType: "none"`) or already-authorized-and-metered by the user's own
+Google account (Calendar). An LLM API call costs money per invocation —
+`research_market_options` should not run silently as a side effect of
+routine Evidence-adding the way, say, `read_calendar` does; it needs the
+same explicit-trigger discipline `create_task`/`save_document`'s
+`automationLevel === "automatic"` gate already establishes for
+consequential actions, applied here for cost rather than for
+data-mutation risk. Exact UX (a button the user presses, versus an
+automatic call once 0 options exist for a comparison) is Sprint-034's own
+implementation decision, not resolved here.
+
+**Document semantic search (RFC-0001 §11's other half — "drive
+intelligent") reuses this same Provider, not a separate one.** A second
+capability, `embedding:generate`, added to the same `AnthropicAIProvider`
+registration once the Document module's own sprint needs it — same vendor
+relationship, same credential, no second Provider entry, the identical
+"one Provider, multiple capability interfaces" pattern §8f's Decision 3
+already established for Open-Meteo's weather/geocoding split. Storage for
+the resulting embeddings is `pgvector` — a Postgres extension on the
+*existing* database, not a new database technology, keeping RFC-0001's
+single-datastore shape intact. The Document module's own sprint designs
+the chunking/retrieval mechanics; this section only reserves the
+Provider-level slot they'll plug into.
+
 ## 9. MVP Skill Registry
 
 The first 12 Skills. Four map directly onto capability that already exists
@@ -1061,6 +1135,7 @@ the rest are net-new.
 | 2026-07-13 | First real Module: Shopping, as a 5th `AxisModuleId`, not a new architectural layer (extends `intentEngine`/`routingEngine`/`planningEngine`'s existing mechanism). Four Agents at MVP — Price, Reviews, Quality, Brand — none persisted or independently coded; each is a recognized `NormalizedMeasure` (`price` existing, `rating`/`quality`/`brand_score` new) plus its UI. Multi-Agent reconciliation is `compare_options` (§9), built for the first time: deterministic per-measure min-max normalization (direction-aware via a new `MEASURE_DIRECTION` map), summed per option, never an LLM judgment call. `Evidence.metadata.optionLabel` (new field, same denormalized-string pattern as `sourceDocumentTitle`) lets Evidence be grouped by which option it describes; `find_lowest_value`'s own path is unaffected. Resolves all three of §10's open Agent questions (Agent count, persisted identity, reconciliation). Split across two sprints, mirroring Calendar's own three-sprint rollout: Sprint-029 builds the comparison engine only (measures, `optionLabel`, `compare_options`, Verdict's new `ranking` field) with no new Axis routing or UI; Sprint-030 adds the `"shopping"` module/routing and the Decision-page UI. Cross-Module interconnection (Agents from *different* Modules on one Mission) stays deferred until the Skill Planner exists — Shopping's Agents are Planner-ready (act only through Skills) but no cross-Module execution path is built yet. Real market-wide product discovery (no named candidates) deferred until a real product-search Provider is chosen — no free/keyless one exists the way Open-Meteo did. Documented in [§7a](#7a-first-real-module-shopping-sprint-029030). Scoped for implementation in Sprint-029 (engine) and Sprint-030 (module/UI). | Recorded |
 | 2026-07-13 | Correction to the row above, recorded once Sprint-029/030 actually shipped: the engine/UI split held, but the sprint *boundary* inside "engine" moved. Sprint-029 shipped narrower than planned — only the new measures, `MEASURE_DIRECTION`, and `compare_options` itself, with pure unit tests and zero database/pipeline involvement (matching `find_lowest_value`'s own original Sprint-006 shape). `optionLabel`, `Verdict.ranking`, the `find_lowest_value`/`compare_options` branching logic in `evidenceService.recomputeVerdict`, and the `"shopping"` `AxisModuleId`/`intentEngine`/`routingEngine`/`planningEngine` wiring all landed together in Sprint-030 instead, once routing needed a real path to `compare_options`. The Decision-page UI is deferred one sprint further still, to Sprint-031 — the same reviewability reasoning that split Sprint-029 from Sprint-030 (this sprint alone already touches Axis routing, Evidence, and the Verdict schema) applies again to adding a UI on top in the same sprint. The branching rule itself shipped exactly as designed: 2+ distinct `optionLabel`s with comparable Evidence routes the Verdict through `compare_options`; otherwise `find_lowest_value` runs unchanged. See [§7a](#7a-first-real-module-shopping-sprint-029030)'s addendum. Implemented in Sprint-030. | Recorded |
 | 2026-07-13 | Second Module: Travel, as a 6th `AxisModuleId`, chosen specifically to test whether §7a's Module design generalizes past Shopping or was quietly Shopping-specific. It generalizes: `evidenceService.recomputeVerdict`'s `compare_options` branching needed zero changes (it already keyed purely on `optionLabel` count, never on `AxisModuleId`). Only the "front door" was built — `intentEngine`/`routingEngine`/`planningEngine` cases plus one new `NormalizedMeasure` (`duration`, `lower_is_better`) — reusing `price`/`rating` as-is for cost and review-score comparison. `intentEngine`'s new Travel rule is ordered *before* the existing Shopping rule (Shopping's `/^compare\s+/i` pattern is broad enough to otherwise swallow Travel-flavored phrasing first, since rules are checked in order and first match wins); every existing Shopping trigger-pattern test is unaffected since Travel's patterns are narrower and Travel-specific. `moduleLabel`/`domainLabel` both updated in this same sprint (Sprint-030/031's gap — `domainLabel`'s manual `if`-chain isn't compiler-forced the way `moduleLabel`'s exhaustive `switch` is — is called out proactively this time rather than caught retroactively). Documented in [§7b](#7b-second-module-travel-sprint-033). Scoped for implementation in Sprint-033. | Recorded |
+| 2026-07-14 | AI Provider — Information Retrieval: resolves RFC-0001 §11's long-deferred "should Atlas Brain become a genuine AI" question, narrower than originally framed. A real LLM (Anthropic API) is added as one more `Provider` (`authType: "api_key"`, the one auth shape `Provider`'s type had carried unused since §8b), consumed only by Skills — zero changes to `provider.ts`/`providerRegistry.ts` expected, zero changes to any Atlas Brain engine (`intentEngine`/`entityEngine`/`routingEngine`/`planningEngine`/`scoringEngine`/`learningEngine` stay fully deterministic, no exception to the discipline held since Sprint-002). One new Skill, `research_market_options` (`sideEffects: "external"`), returns AI-sourced options in ordinary Evidence shape — subject to the same `normalizeEvidence`/`compare_options` machinery as any other Evidence, never a special-cased AI verdict. This directly unblocks the market-wide discovery both §7a (Shopping) and §7b (Travel) deferred for lack of a per-vertical commercial API — one general information-retrieval Provider replaces the need for "1 milliard de providers." Real per-call cost (unlike every prior Provider, which was either free or already user-authorized) means this Skill needs an explicit-trigger gate, not silent automatic invocation — exact UX left to Sprint-034. `embedding:generate` reserved as a second capability on the same Provider for the Document module's semantic-search sprint, backed by `pgvector` on the existing Postgres (no new database). Documented in [§8g](#8g-ai-provider--information-retrieval-sprint-034). Scoped for implementation in Sprint-034. | Recorded |
 
 These four decisions resolve RFC-0001 §11's open question about the
 relationship between the Planning Engine and the Skill Planner. They do not

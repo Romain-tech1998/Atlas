@@ -221,6 +221,14 @@
         "currencyPlaceholder": "ex. « CAD »",
         "observedAtLabel": "Date observée"
       },
+      "research": {
+        "trigger": "Rechercher des options réelles",
+        "searching": "Recherche en cours...",
+        "hint": "Demande à une IA de rechercher sur le web des options réelles et sourcées — coûte de l'argent par recherche, donc ne s'exécute que lorsque vous appuyez sur ce bouton.",
+        "noneFound": "Aucune option réelle et sourcée n'a été trouvée pour ce sujet.",
+        "unauthorized": "La fonctionnalité de recherche IA n'est pas configurée (clé API manquante).",
+        "unavailable": "Impossible de joindre le service de recherche IA. Réessayez plus tard."
+      },
       "fromMemory": {
         "toggle": "Depuis vos souvenirs",
         "empty": "Vous n'avez pas encore de souvenirs.",

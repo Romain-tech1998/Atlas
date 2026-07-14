@@ -221,6 +221,14 @@
         "currencyPlaceholder": "e.g. \"CAD\"",
         "observedAtLabel": "Observed date"
       },
+      "research": {
+        "trigger": "Research real options",
+        "searching": "Researching...",
+        "hint": "Asks an AI web search for real, sourced options — costs money per search, so this only runs when you press it.",
+        "noneFound": "No real, sourced options were found for this subject.",
+        "unauthorized": "The AI research feature isn't configured (missing API key).",
+        "unavailable": "Couldn't reach the AI research service. Try again later."
+      },
       "fromMemory": {
         "toggle": "From your memories",
         "empty": "You don't have any memories yet.",
