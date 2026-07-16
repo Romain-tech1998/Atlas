@@ -93,16 +93,14 @@ function getOptionLabel(metadata: unknown): string | null {
   return typeof label === "string" ? label : null;
 }
 
-/** Sprint-034: the small fixed default RFC-0003 §8g leaves as this
- * sprint's own implementation decision when a Decision has no Evidence
- * yet to imply criteria from. */
-const DEFAULT_RESEARCH_CRITERIA = ["price", "rating"];
-
 /** Whatever recognized measures this Decision's Evidence already uses —
  * the criteria `research_market_options` is asked to score options
  * against, so a fresh research call stays consistent with what's already
- * been entered by hand. Falls back to a small fixed default only when
- * nothing has been recognized yet. */
+ * been entered by hand. `Decision` deliberately has no `module` field
+ * (RFC-0003 §7a/§8h), so there's no honest module-aware default to fall
+ * back on when nothing's known yet — an empty array tells the Provider to
+ * pick its own relevant criteria instead of guessing one here
+ * (Sprint-036, RFC-0003 §8g/§8h follow-up). */
 function deriveResearchCriteria(evidence: EvidenceItem[]): string[] {
   const measures = new Set<string>();
   for (const item of evidence) {
@@ -112,7 +110,7 @@ function deriveResearchCriteria(evidence: EvidenceItem[]): string[] {
       }
     }
   }
-  return measures.size > 0 ? [...measures] : DEFAULT_RESEARCH_CRITERIA;
+  return [...measures]; // empty array when nothing is known yet — no hardcoded guess
 }
 
 /** One Evidence item's claim/source and its normalized-value badges. Shared

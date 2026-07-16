@@ -111,11 +111,25 @@ export function mapMarketOptionsResponse(raw: unknown): MarketOption[] {
   return options.map(toMarketOption).filter((option): option is MarketOption => option !== null);
 }
 
+/** Sprint-036: no hardcoded ["price", "rating"] fallback — when the caller
+ * has nothing to imply criteria from yet (a fresh Decision with no
+ * Evidence), the model is asked to choose its own relevant criteria for
+ * the subject, the same way it's already trusted to find and cite real
+ * options, rather than this Provider guessing a module-aware default that
+ * `Decision`'s deliberately module-less schema has no honest way to pick
+ * (RFC-0003 §7a/§8h). Self-chosen criteria still only ever land as
+ * `NORMALIZED_MEASURES` values — the JSON schema's `enum` and
+ * `toMarketOptionValue`'s runtime check both already constrain this
+ * unchanged, so an out-of-vocabulary self-chosen criterion is dropped the
+ * same way an out-of-vocabulary value already was before this change. */
 function buildPrompt(subject: string, criteria: string[]): string {
-  const criteriaList = criteria.length > 0 ? criteria.join(", ") : "price, rating";
+  const criteriaInstruction =
+    criteria.length > 0
+      ? `Score each option against these criteria: ${criteria.join(", ")}.`
+      : "Decide which 2-4 criteria are most relevant for comparing options like this, and score each option against the criteria you choose.";
   return [
     `Find real, currently-available, named options for: "${subject}".`,
-    `Score each option against these criteria: ${criteriaList}.`,
+    criteriaInstruction,
     "Use web search to ground every option and every value in something you actually found — never invent or estimate a plausible-looking number, and never include an option or a value you cannot cite a real source for.",
     'Every value must include a "source" (a URL or publication name a person could actually check).',
     'If you cannot find anything groundable for this subject, return { "options": [] } — an honest empty result, not a fabricated one.',
