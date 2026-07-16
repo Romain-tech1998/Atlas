@@ -1,30 +1,34 @@
 // Sprint-024 (RFC-0001 §4 "Reliable Test Infrastructure"): a genuinely
 // dedicated Postgres instance for the test suite, replacing Sprint-023's
-// same-physical-store-as-DATABASE_URL fallback. This is a real Postgres
-// binary (via `embedded-postgres`, which bundles the actual server
-// executable per platform — not a WASM/embedded-in-process engine), run as
-// its own OS process on its own port, entirely separate from `prisma dev`'s
-// server. `prisma dev`'s local database turned out to be PGlite (an
-// embedded, effectively single-connection WASM Postgres) under the hood —
-// the root cause of the connection/protocol fragility seen against it across
-// Sprints 018/020/021/023 — so this sprint moves off it rather than
-// continuing to work around it.
+// same-physical-store-as-DATABASE_URL fallback.
+//
+// Sprint-035 (RFC-0003 §8h addendum): the `embedded-postgres` npm package
+// this originally used wraps a vanilla per-platform Postgres binary with no
+// `pgvector` extension and no mechanism to add one (confirmed directly, not
+// assumed) — the same gap that also forced the dev database off `prisma
+// dev`. Both moved to Docker, running the official `pgvector/pgvector`
+// image. The exported functions below (createTestPostgres/ensureSchema/
+// stopTestPostgres) keep their exact names and call sites; only the
+// lifecycle underneath changed, from the `EmbeddedPostgres` Node API
+// (initialise/start/stop) to the equivalent Docker CLI calls (`docker run`/
+// wait-for-`pg_isready`/`docker rm -f`). No named volume is used for the
+// test container — an ephemeral container's writable layer disappears the
+// moment it's removed, which is exactly the "wiped clean before and after"
+// guarantee the old DATA_DIR wipe gave, for free.
 //
 // Shared between `vitest.global-setup.ts` (automatic, full lifecycle: wipe
-// -> initialise -> start -> push schema -> [tests run] -> stop -> wipe) and
+// -> start -> push schema -> [tests run] -> stop) and
 // `scripts/push-test-db.mjs` (a manual, one-shot "make sure the schema is
 // current" convenience script, for poking at the test database directly
 // without running the whole suite).
 import "dotenv/config";
 import { execSync } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import os from "node:os";
-import EmbeddedPostgres from "embedded-postgres";
+import pg from "pg";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const { Client } = pg;
 
-export const DATA_DIR = path.resolve(__dirname, "..", ".test-postgres-data");
+const CONTAINER_NAME = "atlas-test-postgres";
+const IMAGE = "pgvector/pgvector:pg17";
 
 /** Parses connection details out of TEST_DATABASE_URL — the single source
  * of truth for how to reach the test database, same as DATABASE_URL is for
@@ -49,41 +53,110 @@ export function getTestPostgresConfig() {
   };
 }
 
-/** Constructs (but does not start) the EmbeddedPostgres instance for the
- * test cluster — `databaseDir` is fixed (`DATA_DIR`), everything else comes
- * from TEST_DATABASE_URL. `persistent: true` because reset semantics are
- * handled explicitly by the caller (wiping `DATA_DIR` before init), not by
- * `stop()`'s own delete-on-shutdown behavior — that keeps "reset before the
- * suite runs" an explicit, visible step rather than an implicit side effect
- * of stopping. */
-export function createTestPostgres() {
-  const { port, user, password } = getTestPostgresConfig();
-  return new EmbeddedPostgres({
-    databaseDir: DATA_DIR,
-    port,
-    user,
-    password,
-    authMethod: "password",
-    persistent: true,
-  });
+function tryRun(command) {
+  try {
+    execSync(command, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-/** Creates the target database (idempotent — Postgres itself errors on a
- * duplicate CREATE DATABASE, so this checks first) and applies the current
- * schema via the project's existing `prisma db push` mechanism — the same
- * schema-application workflow used against the real database, just pointed
- * at this dedicated instance. */
+/** `pg_isready` alone isn't sufficient — it can report "accepting
+ * connections" for an instant right as the server transitions from
+ * startup to ready, and a real client connecting in that window gets a
+ * `FATAL: the database system is starting up` (observed directly, not a
+ * hypothetical). So this only declares readiness once an actual client can
+ * connect and run a trivial query against the "postgres" maintenance
+ * database. */
+async function waitUntilReady(config, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (tryRun(`docker exec ${CONTAINER_NAME} pg_isready -U ${config.user}`)) {
+      const client = new Client({
+        host: config.host,
+        port: config.port,
+        user: config.user,
+        password: config.password,
+        database: "postgres",
+      });
+      try {
+        await client.connect();
+        await client.query("SELECT 1");
+        return;
+      } catch {
+        // Not actually ready yet — fall through to retry.
+      } finally {
+        await client.end().catch(() => {});
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error(`Test Postgres container did not become ready within ${timeoutMs}ms.`);
+}
+
+/** Constructs (but does not start) the test Postgres handle. `initialise()`
+ * is a no-op — the Docker image bootstraps its own data directory on first
+ * boot inside the container, there's no separate cluster-files step the
+ * way `EmbeddedPostgres` needed — kept only so `push-test-db.mjs`'s
+ * unconditional call to it doesn't need to change. */
+export function createTestPostgres() {
+  const config = getTestPostgresConfig();
+  return {
+    async initialise() {},
+    /** Removes any stale container from a previous crashed run (the same
+     * "wipe before boot" guarantee this project has held since Sprint-024),
+     * then starts a fresh one and waits for it to accept connections. */
+    async start() {
+      tryRun(`docker rm -f ${CONTAINER_NAME}`);
+      execSync(
+        `docker run -d --name ${CONTAINER_NAME} ` +
+          `-e POSTGRES_USER=${config.user} -e POSTGRES_PASSWORD=${config.password} ` +
+          `-p ${config.port}:5432 ${IMAGE}`,
+        { stdio: "inherit" },
+      );
+      await waitUntilReady(config);
+    },
+    getPgClient(database) {
+      return new Client({
+        host: config.host,
+        port: config.port,
+        user: config.user,
+        password: config.password,
+        database,
+      });
+    },
+  };
+}
+
+/** Creates the target database (idempotent — checks first, same as before),
+ * explicitly creates the `vector` extension inside it (extensions are
+ * per-database in Postgres, so this can't happen against the "postgres"
+ * maintenance database used just above — and is done explicitly here
+ * rather than assumed as a side effect of Prisma's own `extensions =
+ * [vector]` datasource config, confirmed this needs to be explicit per
+ * RFC-0003 §8h's own "verify, don't assume" discipline), then applies the
+ * current schema via the project's existing `prisma db push` mechanism. */
 export async function ensureSchema(pg) {
   const { database } = getTestPostgresConfig();
-  const client = pg.getPgClient("postgres");
-  await client.connect();
+
+  const maintenanceClient = pg.getPgClient("postgres");
+  await maintenanceClient.connect();
   try {
-    const { rows } = await client.query("SELECT 1 FROM pg_database WHERE datname = $1", [database]);
+    const { rows } = await maintenanceClient.query("SELECT 1 FROM pg_database WHERE datname = $1", [database]);
     if (rows.length === 0) {
-      await pg.createDatabase(database);
+      await maintenanceClient.query(`CREATE DATABASE "${database}"`);
     }
   } finally {
-    await client.end();
+    await maintenanceClient.end();
+  }
+
+  const dbClient = pg.getPgClient(database);
+  await dbClient.connect();
+  try {
+    await dbClient.query("CREATE EXTENSION IF NOT EXISTS vector;");
+  } finally {
+    await dbClient.end();
   }
 
   execSync("npx prisma db push", {
@@ -92,40 +165,12 @@ export async function ensureSchema(pg) {
   });
 }
 
-/** Resolves the `pg_ctl` binary bundled by the platform-specific
- * `@embedded-postgres/*` package `embedded-postgres` itself depends on —
- * mirrors that package's own (internal, unexported) platform switch. */
-async function resolvePgCtl() {
-  const key = `${os.platform()}-${os.arch()}`;
-  const packages = {
-    "darwin-arm64": "@embedded-postgres/darwin-arm64",
-    "darwin-x64": "@embedded-postgres/darwin-x64",
-    "linux-arm64": "@embedded-postgres/linux-arm64",
-    "linux-arm": "@embedded-postgres/linux-arm",
-    "linux-ia32": "@embedded-postgres/linux-ia32",
-    "linux-ppc64": "@embedded-postgres/linux-ppc64",
-    "linux-x64": "@embedded-postgres/linux-x64",
-    "win32-x64": "@embedded-postgres/windows-x64",
-  };
-  const packageName = packages[key];
-  if (!packageName) throw new Error(`Unsupported platform/arch for embedded Postgres: ${key}`);
-  const { pg_ctl } = await import(packageName);
-  return pg_ctl;
-}
-
-/**
- * Stops the test Postgres cluster via `pg_ctl stop -m fast -w` directly,
- * rather than `EmbeddedPostgres#stop()`. On Windows, that method force-kills
- * the process with `taskkill /f` — which doesn't give Postgres a chance to
- * release its shared-memory segment cleanly, and was observed leaving a
- * zombie state that made the *next* run's fresh `initdb` fail outright
- * ("pre-existing shared memory block is still in use"). `pg_ctl stop -m
- * fast` is Postgres's own documented graceful-shutdown command — `-w` makes
- * it block until shutdown is actually confirmed complete, so this function
- * doesn't return until it's safe for the next run to reuse the same port
- * and data directory.
- */
+/** Force-removes the test container. Unlike the old `pg_ctl stop -m fast
+ * -w` approach (needed because `EmbeddedPostgres#stop()`'s Windows
+ * force-kill left shared memory in a bad state for the *next* run's
+ * `initdb`), `docker rm -f` has no equivalent problem to work around —
+ * removing the container discards its entire writable layer, so the next
+ * `start()` always begins from a clean image, every time. */
 export async function stopTestPostgres() {
-  const pgCtl = await resolvePgCtl();
-  execSync(`"${pgCtl}" stop -D "${DATA_DIR}" -m fast -w`, { stdio: "inherit" });
+  tryRun(`docker rm -f ${CONTAINER_NAME}`);
 }

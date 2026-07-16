@@ -9,8 +9,10 @@ import { usePaginatedSearch, type SearchPage } from "@/hooks/use-paginated-searc
 const PREVIEW_LENGTH = 200;
 
 /** The first N characters, verbatim — not a summary, not "smart"
- * truncation (Sprint-010's original convention on this page, unchanged). */
-function previewContent(content: string): string {
+ * truncation (Sprint-010's original convention on this page, unchanged).
+ * Exported for `DocumentSemanticSearch` (Sprint-035) to reuse the same
+ * preview convention for its matched-Document cards. */
+export function previewContent(content: string): string {
   return content.length > PREVIEW_LENGTH ? `${content.slice(0, PREVIEW_LENGTH)}…` : content;
 }
 

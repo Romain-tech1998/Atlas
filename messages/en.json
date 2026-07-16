@@ -321,7 +321,18 @@
     "searchPlaceholder": "Search...",
     "noResults": "No results found.",
     "loadMore": "Load more",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "semanticSearch": {
+      "title": "Ask your Documents",
+      "hint": "Finds Documents by meaning, not just matching words — costs money per search, so this only runs when you press it.",
+      "placeholder": "What are you looking for?",
+      "ask": "Ask",
+      "searching": "Searching...",
+      "noMatches": "Nothing relevant found in your Documents.",
+      "similarity": "{value}% match",
+      "unauthorized": "Semantic search isn't configured (missing API key).",
+      "unavailable": "Couldn't reach the semantic search service. Try again later."
+    }
   },
   "providers": {
     "title": "Providers",

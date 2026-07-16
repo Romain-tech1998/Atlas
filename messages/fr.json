@@ -321,7 +321,18 @@
     "searchPlaceholder": "Rechercher...",
     "noResults": "Aucun résultat.",
     "loadMore": "Charger plus",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "semanticSearch": {
+      "title": "Interroger vos documents",
+      "hint": "Trouve des documents par sens, pas seulement par mots correspondants — coûte de l'argent par recherche, donc ne s'exécute que lorsque vous appuyez sur ce bouton.",
+      "placeholder": "Que cherchez-vous ?",
+      "ask": "Demander",
+      "searching": "Recherche en cours...",
+      "noMatches": "Rien de pertinent trouvé dans vos documents.",
+      "similarity": "{value} % de correspondance",
+      "unauthorized": "La recherche sémantique n'est pas configurée (clé API manquante).",
+      "unavailable": "Impossible de joindre le service de recherche sémantique. Réessayez plus tard."
+    }
   },
   "providers": {
     "title": "Fournisseurs",

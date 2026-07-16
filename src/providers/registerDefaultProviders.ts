@@ -2,6 +2,7 @@ import { registerProvider } from "@/providers/providerRegistry";
 import { mockCalendarProvider } from "@/providers/mock-calendar-provider";
 import { openMeteoProvider } from "@/providers/open-meteo-provider";
 import { anthropicAIProvider } from "@/providers/anthropic-ai-provider";
+import { voyageEmbeddingProvider } from "@/providers/voyage-embedding-provider";
 import { GOOGLE_CALENDAR_PROVIDER_ID } from "@/services/googleCalendarConnectionService";
 
 /**
@@ -27,4 +28,5 @@ export function registerDefaultProviders(): void {
   });
   registerProvider(openMeteoProvider);
   registerProvider(anthropicAIProvider);
+  registerProvider(voyageEmbeddingProvider);
 }

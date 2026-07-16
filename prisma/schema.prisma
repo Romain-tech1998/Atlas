@@ -3,12 +3,14 @@
 // src/generated/prisma and the connection URL is read from prisma.config.ts.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 // ---------------------------------------------------------------------------
@@ -63,20 +65,20 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  memories       Memory[]
-  axisRequests   AxisRequest[]
-  learningSignals LearningSignal[]
-  missions       Mission[]
-  decisions      Decision[]
-  evidence       Evidence[]
-  verdicts       Verdict[]
-  tasks          Task[]
-  documents      Document[]
-  atlasState     AtlasState?
+  accounts            Account[]
+  sessions            Session[]
+  memories            Memory[]
+  axisRequests        AxisRequest[]
+  learningSignals     LearningSignal[]
+  missions            Mission[]
+  decisions           Decision[]
+  evidence            Evidence[]
+  verdicts            Verdict[]
+  tasks               Task[]
+  documents           Document[]
+  atlasState          AtlasState?
   externalConnections ExternalConnection[]
-  location       UserLocation?
+  location            UserLocation?
 }
 
 enum MemoryType {
@@ -111,28 +113,28 @@ enum AxisStatus {
 
 /// A user's raw request transformed into a structured, actionable object.
 model AxisRequest {
-  id               String     @id @default(cuid())
-  userId           String
-  missionId        String?
+  id              String     @id @default(cuid())
+  userId          String
+  missionId       String?
   /// The atomic Decision (RFC-0001 §4) this request addresses. Nullable for
   /// requests saved before Decision existed; every new request that's part
   /// of a Mission gets one going forward.
-  decisionId       String?
-  rawInput         String
-  status           AxisStatus @default(PENDING)
-  intent           String?
-  module           String?
-  confidence       Float?
-  entities         Json?
-  summary          String?
+  decisionId      String?
+  rawInput        String
+  status          AxisStatus @default(PENDING)
+  intent          String?
+  module          String?
+  confidence      Float?
+  entities        Json?
+  summary         String?
   /// Snapshot of the ContextBundle the Context Engine assembled for this request.
-  contextSnapshot  Json?
+  contextSnapshot Json?
   /// The ExecutionPlan produced by the Planning Engine.
-  executionPlan    Json?
+  executionPlan   Json?
   /// The ScoreBreakdown produced by the Scoring Engine.
-  scoreBreakdown   Json?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  scoreBreakdown  Json?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   mission         Mission?         @relation(fields: [missionId], references: [id], onDelete: SetNull)
@@ -154,14 +156,14 @@ model AxisRequest {
 /// Atlas Brain's routing decision for an AxisRequest: which module should
 /// handle it, what action to take, and why.
 model AxisDecision {
-  id                String   @id @default(cuid())
-  axisRequestId     String
-  chosenModule      String
-  suggestedModules  String[] @default([])
-  action            String
-  reasoning         String
-  confidence        Float
-  createdAt         DateTime @default(now())
+  id               String   @id @default(cuid())
+  axisRequestId    String
+  chosenModule     String
+  suggestedModules String[] @default([])
+  action           String
+  reasoning        String
+  confidence       Float
+  createdAt        DateTime @default(now())
 
   axisRequest AxisRequest @relation(fields: [axisRequestId], references: [id], onDelete: Cascade)
 
@@ -226,25 +228,25 @@ enum MissionStatus {
 /// AxisRequest made toward it. Set once at creation from the founding
 /// request's summary; not renamed as the mission evolves.
 model Mission {
-  id        String        @id @default(cuid())
-  userId    String
+  id          String        @id @default(cuid())
+  userId      String
   /// The user's original raw intention, verbatim (e.g. "Plan my trip to Tokyo").
-  goal      String
+  goal        String
   /// Short display title, derived once from the founding AxisRequest's summary.
-  title     String?
-  status    MissionStatus @default(ACTIVE)
+  title       String?
+  status      MissionStatus @default(ACTIVE)
   /// Sprint-020 (RFC-0001 §4 "Mission Completion Semantics"): set exactly
   /// once, only when an explicit user action transitions the Mission to
   /// COMPLETED/ABANDONED — never inferred, never set for ACTIVE Missions.
   /// Null for every Mission that predates this sprint, even if already
   /// terminal — rendered honestly as "no recorded date", never backfilled.
-  outcomeAt DateTime?
+  outcomeAt   DateTime?
   /// The user's optional free-text note captured alongside that same
   /// transition — trimmed, empty string persisted as null. Never an
   /// AI-authored summary (RFC-0001 §4).
   outcomeNote String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   axisRequests AxisRequest[]
@@ -279,14 +281,14 @@ enum DecisionStatus {
 /// nullable placeholder column that's always null this sprint would just
 /// be dead weight. "Not yet RESOLVED" already means "no Verdict yet".
 model Decision {
-  id        String         @id @default(cuid())
-  userId    String
-  missionId String
+  id                String                     @id @default(cuid())
+  userId            String
+  missionId         String
   /// Short display title, derived once from the founding AxisRequest's
   /// summary — same pattern as Mission.title. In Sprint-003's one-Decision
   /// scope this mirrors the Mission's own title.
-  title     String?
-  status    DecisionStatus @default(OPEN)
+  title             String?
+  status            DecisionStatus             @default(OPEN)
   /// Sprint-017 (RFC-0001 §4 "Verdict Acceptance"): set exactly once, only
   /// when RESOLVED is reached via an explicit user accept/decline action —
   /// never set by a Verdict becoming PRODUCED on its own, and never by any
@@ -298,8 +300,8 @@ model Decision {
   /// only alongside `resolutionOutcome: DECLINED`. Never fabricated into
   /// Evidence, never fed back into any Skill (RFC-0001 §4).
   resolutionNote    String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   mission      Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
@@ -373,17 +375,17 @@ enum VerdictStatus {
 /// `find_lowest_value` Skill's deterministic result (`evidenceService`) —
 /// never a guess.
 model Verdict {
-  id         String        @id @default(cuid())
-  userId     String
-  decisionId String        @unique
-  status     VerdictStatus @default(INSUFFICIENT_EVIDENCE)
+  id                  String        @id @default(cuid())
+  userId              String
+  decisionId          String        @unique
+  status              VerdictStatus @default(INSUFFICIENT_EVIDENCE)
   /// The recommendation itself, e.g. "RBC". JSON-encoded LocalizedText,
   /// same convention as Mission.title/Decision.title. Null while
   /// INSUFFICIENT_EVIDENCE — always the case in Sprint-004.
-  recommendation String?
+  recommendation      String?
   /// Why, e.g. "chosen for lower fees and branch proximity". Same
   /// LocalizedText convention. Null while INSUFFICIENT_EVIDENCE.
-  reasoning  String?
+  reasoning           String?
   /// Deliberately NOT named `confidence` — must never be confused with, or
   /// computed from, scoringEngine's parsing-stage confidence (RFC-0001
   /// §4/§5's "parsing confidence vs. recommendation confidence" rule).
@@ -394,7 +396,7 @@ model Verdict {
   /// computeEvidenceCoverage for the exact (deliberately simple,
   /// placeholder-quality) formula, and evidenceService for where this is
   /// computed. Never rendered in the UI as a percentage/confidence value.
-  evidenceCoverage Float?
+  evidenceCoverage    Float?
   /// Sprint-006 addition: the Evidence ids the `find_lowest_value` Skill
   /// actually compared to produce this Verdict — a JSON array of Evidence
   /// ids, or null while INSUFFICIENT_EVIDENCE. Exists so traceability
@@ -410,9 +412,9 @@ model Verdict {
   /// from `find_lowest_value` instead (including every Verdict that
   /// predates this sprint). Same persist-on-write, read-back-don't-recompute
   /// pattern as `comparedEvidenceIds`.
-  ranking Json?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  ranking             Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   decision Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
@@ -512,14 +514,21 @@ model ExternalConnection {
 }
 
 /// Output of the Document module: a note or file derived from an AxisRequest.
+/// `embedding` is nullable — a Document written before Sprint-035, or one
+/// whose embedding call failed soft, simply doesn't participate in semantic
+/// search (absence is honest, not an error, same pattern as
+/// NormalizedValue.measure's optionality). Dimension (1024) matches Voyage
+/// AI's voyage-3.5 default output dimension — confirmed against Voyage's
+/// own docs at implementation time, not assumed.
 model Document {
-  id            String   @id @default(cuid())
+  id            String                       @id @default(cuid())
   userId        String
   axisRequestId String?
   title         String
   content       String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  embedding     Unsupported("vector(1024)")?
+  createdAt     DateTime                     @default(now())
+  updatedAt     DateTime                     @updatedAt
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   axisRequest AxisRequest? @relation(fields: [axisRequestId], references: [id], onDelete: SetNull)

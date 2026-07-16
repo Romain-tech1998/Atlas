@@ -840,17 +840,135 @@ automatic call once 0 options exist for a comparison) is Sprint-034's own
 implementation decision, not resolved here.
 
 **Document semantic search (RFC-0001 §11's other half — "drive
-intelligent") reuses this same Provider, not a separate one.** A second
-capability, `embedding:generate`, added to the same `AnthropicAIProvider`
-registration once the Document module's own sprint needs it — same vendor
-relationship, same credential, no second Provider entry, the identical
-"one Provider, multiple capability interfaces" pattern §8f's Decision 3
-already established for Open-Meteo's weather/geocoding split. Storage for
-the resulting embeddings is `pgvector` — a Postgres extension on the
-*existing* database, not a new database technology, keeping RFC-0001's
-single-datastore shape intact. The Document module's own sprint designs
-the chunking/retrieval mechanics; this section only reserves the
-Provider-level slot they'll plug into.
+intelligent") was originally sketched here as a second capability on this
+same Provider — corrected before Sprint-035 was scoped: Anthropic's API
+has no native embeddings endpoint** (unlike its chat/tool-use surface,
+which is what `anthropicAIProvider` uses). Embeddings need their own
+Provider — see [§8h](#8h-document-semantic-search-sprint-035) for the
+resolution, which Sprint-035's own implementation should still confirm
+against current Anthropic/Voyage AI documentation before writing code,
+the same "verify against current docs, don't trust a possibly-stale
+assumption" discipline §8g's own `anthropicAIProvider` note already
+asked for regarding the web-search tool shape. What still holds from this
+paragraph's original framing: storage for the resulting embeddings is
+`pgvector`, a Postgres extension on the *existing* database, not a new
+database technology, keeping RFC-0001's single-datastore shape intact —
+only the Provider that produces the vectors changed, not where they're
+stored.
+
+## 8h. Document Semantic Search (Sprint-035)
+
+The other half of RFC-0001 §11's AI resolution: the Document module
+becomes the "drive intelligent" Romain described — able to answer
+questions using what it already holds, not just list/search titles
+(Sprint-012's existing substring `query` on `title`/`content`, which
+stays exactly as is for the plain browsing case).
+
+**A second, separate Provider for embeddings — not a second capability on
+`anthropicAIProvider`.** §8g's original sketch assumed one AI Provider
+would cover both chat/retrieval and embeddings; that turned out to be
+wrong once checked — Anthropic's API has no embeddings endpoint.
+Voyage AI (Anthropic's own recommended embeddings provider) is the
+concrete choice, registered as its own `Provider`
+(`capabilities: ["embedding:generate"]`, `authType: "api_key"`,
+`VOYAGE_API_KEY` alongside `ANTHROPIC_API_KEY` in `.env.example`) —
+confirm the current recommended provider/model against Anthropic's own
+docs at implementation time, since this is exactly the kind of
+fast-moving surface §8g already flagged once.
+
+**No chunking at MVP — one embedding per `Document`, over its full
+`content`.** Today's Documents are short, user-authored notes (`write
+down`/`draft`/`save this note` intents) — splitting a Document into
+multiple chunks before embedding is real complexity (chunk boundaries,
+mapping a matched chunk back to a citation) with no concrete Document
+long enough yet to need it. Extend to chunking only once a real Document
+turns out too long for one embedding to represent well — the same
+"extend only when a concrete case needs it" discipline
+`evidence-normalization.ts` already holds for measures.
+
+**Storage: `pgvector` on the existing Postgres, a new column on
+`Document`, not a new table or a new database.** Prisma's query builder
+has no native vector-similarity operators; the column is declared via
+`Unsupported("vector(N)")` (`N` matching the embedding model's output
+dimension) and cosine-similarity search goes through `$queryRaw`, the
+same escape hatch already implicitly available for anything the
+type-safe query builder can't express. This keeps RFC-0001's
+single-datastore shape intact — the "database" half of Romain's original
+request was never "add a new database," it was "let Postgres do more."
+
+**One new Skill: semantic search over the user's own Documents,
+scoped to that user (`WHERE "userId" = $1` in the same raw query, never a
+cross-user search).** Given a question, it embeds the question (via the
+same Voyage Provider), finds the nearest `Document`s by cosine distance,
+and returns them with their similarity score — the answer-synthesis step
+(turning matched Documents into a written answer, not just a ranked list)
+can reuse `anthropicAIProvider`'s chat capability in the same request
+flow, or be deferred to return only the matched Documents themselves at
+MVP if that is simpler to ship and verify first. Either way, an honest
+"nothing relevant found" result (empty match set) is exactly as valid an
+outcome as a real match — no fabricated relevance, same discipline as
+zero results from `research_market_options`.
+
+**Embedding generation happens on Document write, not lazily on first
+search.** `documentRepository.createDocument` gains a call to generate
+and store the embedding at save time — the same "structure at write time,
+never derived unpredictably at read time" preference this codebase has
+followed since `normalizeEvidence` was deliberately made a read-time
+*pure function* instead (the two aren't in tension: `normalizeEvidence`
+is cheap and deterministic to recompute on every read, an embedding call
+is neither, so it's computed once and stored, closer to how
+`Evidence.metadata.optionLabel` is written once at creation than to how
+normalized values are derived on demand).
+
+**Addendum (Sprint-035, before implementation continued): `pgvector` is
+not available on either Postgres this project currently runs against —
+this turned out to be a bigger fork than "test infrastructure."**
+Verified directly: booting the exact `embedded-postgres` instance
+`vitest.global-setup.ts` uses and running `CREATE EXTENSION IF NOT EXISTS
+vector;` against it fails with `extension "vector" is not available` —
+`embedded-postgres` wraps a vanilla per-platform Postgres binary with no
+extension-bundling mechanism, confirmed against its own documentation,
+not just inferred. The same is true of `.env.example`'s `DATABASE_URL`
+default (`prisma dev`), which §8 already established is PGlite under the
+hood — the *local dev* database has the identical problem, not only the
+test one. Sprint-024's original "no Docker, no system Postgres install
+required" property genuinely cannot be preserved once a real Postgres
+extension is a hard requirement; every path forward needs a real
+Postgres binary with `pgvector` compiled in, somewhere.
+
+**Resolution: Docker, running the official `pgvector/pgvector` image, for
+both the dev database and the test database — replacing `prisma dev` and
+`embedded-postgres` respectively, while keeping everything else about
+each database's role unchanged.** Rejected alternatives and why:
+hand-patching `embedded-postgres`'s binaries with a compiled `pgvector`
+shared library (fragile, per-platform, exactly the kind of quick patch
+this section's own Sprint-035 brief asked not to reach for); pointing
+`TEST_DATABASE_URL` at a remote managed Postgres (reintroduces network
+dependency and shared-state risk across parallel test runs — the two
+problems Sprint-024's move to a dedicated local instance specifically
+solved); `@electric-sql/pglite`'s own vector-extension build (PGlite is
+exactly what Sprint-024 moved *off of*, for connection/protocol fragility
+reasons unrelated to and not fixed by a different WASM build).
+
+**The test database keeps its "dedicated, wiped-before-and-after"
+lifecycle — only the mechanism changes, not the property.**
+`scripts/test-postgres.mjs`'s exported functions
+(`createTestPostgres`/`ensureSchema`/`stopTestPostgres`) keep their
+existing call sites and contracts; internally, `EmbeddedPostgres`'s
+Node-API lifecycle (`initialise`/`start`/`stop`) is replaced with the
+equivalent Docker CLI lifecycle (`docker run`/wait-for-healthy/`docker
+rm`), same "fresh instance per test run" guarantee Sprint-024 designed
+for. This keeps CI simple: GitHub Actions' `ubuntu-latest` runners have a
+working Docker daemon by default, so `npm test` stays fully
+self-contained in CI with **no new `services:` block needed** in
+`ci.yml` — the same script that boots Docker locally boots it in CI,
+preserving Sprint-032/034's "same commands everywhere" property.
+
+**The dev database becomes a small, persistent Docker Compose service**
+(`docker-compose.yml`, new file at the project root) instead of
+`npx prisma dev --detach` — a one-time `docker compose up -d` the user
+runs, documented in `.env.example`'s `DATABASE_URL` comment, replacing
+the current Prisma-Postgres-detached instructions there.
 
 ## 9. MVP Skill Registry
 
@@ -1136,6 +1254,8 @@ the rest are net-new.
 | 2026-07-13 | Correction to the row above, recorded once Sprint-029/030 actually shipped: the engine/UI split held, but the sprint *boundary* inside "engine" moved. Sprint-029 shipped narrower than planned — only the new measures, `MEASURE_DIRECTION`, and `compare_options` itself, with pure unit tests and zero database/pipeline involvement (matching `find_lowest_value`'s own original Sprint-006 shape). `optionLabel`, `Verdict.ranking`, the `find_lowest_value`/`compare_options` branching logic in `evidenceService.recomputeVerdict`, and the `"shopping"` `AxisModuleId`/`intentEngine`/`routingEngine`/`planningEngine` wiring all landed together in Sprint-030 instead, once routing needed a real path to `compare_options`. The Decision-page UI is deferred one sprint further still, to Sprint-031 — the same reviewability reasoning that split Sprint-029 from Sprint-030 (this sprint alone already touches Axis routing, Evidence, and the Verdict schema) applies again to adding a UI on top in the same sprint. The branching rule itself shipped exactly as designed: 2+ distinct `optionLabel`s with comparable Evidence routes the Verdict through `compare_options`; otherwise `find_lowest_value` runs unchanged. See [§7a](#7a-first-real-module-shopping-sprint-029030)'s addendum. Implemented in Sprint-030. | Recorded |
 | 2026-07-13 | Second Module: Travel, as a 6th `AxisModuleId`, chosen specifically to test whether §7a's Module design generalizes past Shopping or was quietly Shopping-specific. It generalizes: `evidenceService.recomputeVerdict`'s `compare_options` branching needed zero changes (it already keyed purely on `optionLabel` count, never on `AxisModuleId`). Only the "front door" was built — `intentEngine`/`routingEngine`/`planningEngine` cases plus one new `NormalizedMeasure` (`duration`, `lower_is_better`) — reusing `price`/`rating` as-is for cost and review-score comparison. `intentEngine`'s new Travel rule is ordered *before* the existing Shopping rule (Shopping's `/^compare\s+/i` pattern is broad enough to otherwise swallow Travel-flavored phrasing first, since rules are checked in order and first match wins); every existing Shopping trigger-pattern test is unaffected since Travel's patterns are narrower and Travel-specific. `moduleLabel`/`domainLabel` both updated in this same sprint (Sprint-030/031's gap — `domainLabel`'s manual `if`-chain isn't compiler-forced the way `moduleLabel`'s exhaustive `switch` is — is called out proactively this time rather than caught retroactively). Documented in [§7b](#7b-second-module-travel-sprint-033). Scoped for implementation in Sprint-033. | Recorded |
 | 2026-07-14 | AI Provider — Information Retrieval: resolves RFC-0001 §11's long-deferred "should Atlas Brain become a genuine AI" question, narrower than originally framed. A real LLM (Anthropic API) is added as one more `Provider` (`authType: "api_key"`, the one auth shape `Provider`'s type had carried unused since §8b), consumed only by Skills — zero changes to `provider.ts`/`providerRegistry.ts` expected, zero changes to any Atlas Brain engine (`intentEngine`/`entityEngine`/`routingEngine`/`planningEngine`/`scoringEngine`/`learningEngine` stay fully deterministic, no exception to the discipline held since Sprint-002). One new Skill, `research_market_options` (`sideEffects: "external"`), returns AI-sourced options in ordinary Evidence shape — subject to the same `normalizeEvidence`/`compare_options` machinery as any other Evidence, never a special-cased AI verdict. This directly unblocks the market-wide discovery both §7a (Shopping) and §7b (Travel) deferred for lack of a per-vertical commercial API — one general information-retrieval Provider replaces the need for "1 milliard de providers." Real per-call cost (unlike every prior Provider, which was either free or already user-authorized) means this Skill needs an explicit-trigger gate, not silent automatic invocation — exact UX left to Sprint-034. `embedding:generate` reserved as a second capability on the same Provider for the Document module's semantic-search sprint, backed by `pgvector` on the existing Postgres (no new database). Documented in [§8g](#8g-ai-provider--information-retrieval-sprint-034). Scoped for implementation in Sprint-034. | Recorded |
+| 2026-07-16 | Document Semantic Search: the row above's `embedding:generate`-on-the-same-Provider assumption was wrong — corrected before implementation, not after. Anthropic's API has no embeddings endpoint; Voyage AI (Anthropic's own recommended embeddings provider) is registered as its own separate `Provider` instead (`capabilities: ["embedding:generate"]`, `authType: "api_key"`). No chunking at MVP — one embedding per `Document` over its full `content`, matching this project's "extend only when a concrete case needs it" discipline (today's Documents are short notes; chunking is real complexity with no concrete Document long enough to need it yet). Storage is a new `pgvector` column on `Document` (`Unsupported("vector(N)")`, queried via `$queryRaw` for cosine similarity) — a Postgres extension on the existing database, not a new one; the "database" half of the original request was "let Postgres do more," not "add a new database." Embeddings are generated at Document write time (`documentRepository.createDocument`), not lazily on first search. An honest empty result for "nothing relevant found" is exactly as valid as a real match, same discipline `research_market_options` already established. Documented in [§8h](#8h-document-semantic-search-sprint-035). Scoped for implementation in Sprint-035. | Recorded |
+| 2026-07-16 | Sprint-035's own item 0 gate failed as designed, surfacing a fork bigger than test infrastructure: neither `embedded-postgres` (test) nor `prisma dev`/PGlite (local dev, `DATABASE_URL`) can run `pgvector` — verified directly (`CREATE EXTENSION vector` fails against the real embedded-postgres instance), not assumed. Resolution: Docker running the official `pgvector/pgvector` image replaces both — `scripts/test-postgres.mjs` keeps its exact existing function contracts and "dedicated, wiped-before-and-after" lifecycle, only swapping `EmbeddedPostgres`'s Node-API calls for the equivalent `docker run`/`docker rm` lifecycle, so CI needs no new `services:` block (`ubuntu-latest` already has a working Docker daemon) and every command stays identical between local and CI, preserving Sprint-032/034's "same commands everywhere" property. The dev database becomes a persistent `docker-compose.yml` service instead of `npx prisma dev --detach`. Rejected: hand-patching `embedded-postgres`'s binaries (fragile, per-platform); a remote managed Postgres for tests (reintroduces the network/shared-state fragility Sprint-024 specifically eliminated); `@electric-sql/pglite`'s own vector build (PGlite is exactly what Sprint-024 moved off of). Confirmed with Romain that Docker Desktop is reliable on his machine before committing to this path, given Docker's backend was observed stuck once during Sprint-034's own CI debugging (traced to that specific sandboxed execution context, not representative). See [§8h](#8h-document-semantic-search-sprint-035)'s addendum. | Recorded |
 
 These four decisions resolve RFC-0001 §11's open question about the
 relationship between the Planning Engine and the Skill Planner. They do not

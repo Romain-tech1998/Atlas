@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { documentRepository } from "@/services/documentRepository";
 import { DocumentsBrowser } from "@/components/documents/documents-browser";
+import { DocumentSemanticSearch } from "@/components/documents/document-semantic-search";
 
 /**
  * Sprint-010 introduced this page as a plain first-20-rows list. Sprint-013
@@ -39,6 +40,8 @@ export default async function DocumentsPage() {
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
+
+      <DocumentSemanticSearch />
 
       <DocumentsBrowser initialPage={initialPage} />
     </main>

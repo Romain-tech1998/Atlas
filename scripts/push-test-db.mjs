@@ -2,22 +2,18 @@
 // prisma/schema.prisma to the dedicated test Postgres instance, exactly the
 // same schema-application workflow the project already uses against the
 // real database (`prisma db push`), just pointed at TEST_DATABASE_URL. Boots
-// the instance (initialising its data directory first if this is the very
-// first run), pushes the schema, then stops it again — this is a one-shot
+// the instance, pushes the schema, then stops it again — this is a one-shot
 // "make sure the test schema is current" utility, not something `npm test`
-// itself depends on. `npm test` handles the whole boot/reset/push/teardown
+// itself depends on. `npm test` handles the whole boot/push/teardown
 // lifecycle automatically, every run, via Vitest's `globalSetup`
 // (vitest.global-setup.ts) — this script exists only for a developer who
 // wants to confirm the schema applies cleanly, or inspect the resulting
 // (empty) schema with a separate tool, without running the full suite.
-import { existsSync } from "node:fs";
-import { createTestPostgres, ensureSchema, stopTestPostgres, DATA_DIR } from "./test-postgres.mjs";
+import { createTestPostgres, ensureSchema, stopTestPostgres } from "./test-postgres.mjs";
 
 const pg = createTestPostgres();
 
-if (!existsSync(DATA_DIR)) {
-  await pg.initialise();
-}
+await pg.initialise();
 await pg.start();
 await ensureSchema(pg);
 await stopTestPostgres();

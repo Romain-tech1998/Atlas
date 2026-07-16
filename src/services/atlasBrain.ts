@@ -14,6 +14,7 @@ import { computeDashboardStats, type DashboardStats } from "@/services/dashboard
 import { runSkill } from "@/skills/skillEngine";
 import { createSaveDocumentSkill } from "@/skills/save-document";
 import { createCreateTaskSkill } from "@/skills/create-task";
+import { registerDefaultProviders } from "@/providers/registerDefaultProviders";
 import { resolveDueDateKeyword } from "@/domain/due-date";
 import type { PipelineTrace } from "@/brain/learning/types";
 import type { AxisPipelineResult } from "@/brain/types";
@@ -82,6 +83,15 @@ async function runPipeline(
   // `saveAxisResult` on purpose — `Document.axisRequestId` needs the saved
   // AxisRequest's real id, so the AxisRequest must exist first.
   if (routing.chosenModule === "document" && plan.automationLevel === "automatic") {
+    // Sprint-035 (RFC-0003 §8h): `createDocument` resolves the Voyage
+    // embedding Provider by id via the registry — unlike the API routes
+    // that call a Provider-backed Skill directly (each already calls this
+    // before running its Skill), nothing upstream of this pipeline ever
+    // populates the registry, so it must happen here too, or the registry
+    // is simply empty and the embedding silently never gets generated on
+    // this path. Idempotent (`registerProvider` overwrites by id), so safe
+    // to call on every pipeline run.
+    registerDefaultProviders();
     const saveDocumentSkill = createSaveDocumentSkill(userId, result.id);
     await runSkill(saveDocumentSkill, { title: entities.title, content: normalizedInput });
   }

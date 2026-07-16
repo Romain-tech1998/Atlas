@@ -1,0 +1,39 @@
+# Sprint-035 (RFC-0003 §8h addendum): replaces `npx prisma dev --detach` as
+# the local dev database. `prisma dev`'s Postgres turned out to be PGlite
+# under the hood (see scripts/test-postgres.mjs's own history) — a vanilla
+# binary with no `pgvector` extension, the same gap that forced the test
+# database off `embedded-postgres`. `pgvector/pgvector` is the official
+# Postgres-with-pgvector-precompiled image; a named volume keeps data across
+# restarts, same persistence `prisma dev --detach` gave before.
+#
+# One-time setup: `docker compose up -d`, then point DATABASE_URL at it (see
+# .env.example).
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: atlas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: atlas_dev
+    # 54330, not the old prisma-dev port (51214): that port fell inside a
+    # Windows/Hyper-V dynamic TCP port-exclusion range (`netsh interface
+    # ipv4 show excludedportrange protocol=tcp`), which blocks Docker from
+    # binding it with a permission error unrelated to anything actually
+    # using the port. 54330 sits right next to the test database's already-
+    # working 54329 (see .env.example's TEST_DATABASE_URL), clear of every
+    # excluded range observed. If this ever starts failing to bind again,
+    # check that command first before assuming something else is wrong.
+    ports:
+      - "54330:5432"
+    volumes:
+      - atlas-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  atlas-postgres-data:
