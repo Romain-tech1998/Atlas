@@ -82,7 +82,7 @@ export default async function ProvidersPage(props: PageProps<"/providers">) {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <h1 className="font-heading text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
         <p className="text-muted-foreground mt-1 text-xs">{t("readOnlyNote")}</p>
       </div>
@@ -139,7 +139,7 @@ export default async function ProvidersPage(props: PageProps<"/providers">) {
       {googleStatus === "connected" && googleResult && (
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="text-lg font-medium">{t("googleCalendar.sectionTitle")}</h2>
+            <h2 className="font-heading text-lg font-medium">{t("googleCalendar.sectionTitle")}</h2>
             <p className="text-muted-foreground text-xs">{t("googleCalendar.liveDataLabel")}</p>
           </div>
           <EventListOrError result={googleResult} t={t} />
@@ -147,12 +147,12 @@ export default async function ProvidersPage(props: PageProps<"/providers">) {
       )}
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">{t("mockCalendar.sectionTitle")}</h2>
+        <h2 className="font-heading text-lg font-medium">{t("mockCalendar.sectionTitle")}</h2>
         <EventListOrError result={mockResult} t={t} />
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">{t("weather.sectionTitle")}</h2>
+        <h2 className="font-heading text-lg font-medium">{t("weather.sectionTitle")}</h2>
 
         <form action="/api/user-location" method="POST" className="flex gap-2">
           <input

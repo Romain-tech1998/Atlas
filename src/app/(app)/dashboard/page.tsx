@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+        <h1 className="font-heading text-2xl font-semibold">{t("dashboard.title")}</h1>
         <p className="text-muted-foreground">{t("dashboard.subtitle")}</p>
       </div>
 
