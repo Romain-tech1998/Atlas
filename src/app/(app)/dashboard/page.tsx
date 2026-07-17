@@ -5,8 +5,9 @@ import { atlasBrain } from "@/services/atlasBrain";
 import { AxisResultCard } from "@/components/axis/axis-result-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ModuleBadge } from "@/components/module/module-badge";
 import { renderLocalized } from "@/i18n/render";
-import { domainLabel, moduleLabel } from "@/i18n/module-label";
+import { domainLabel } from "@/i18n/module-label";
 import { automationLabel } from "@/i18n/automation-label";
 
 export default async function DashboardPage() {
@@ -75,7 +76,7 @@ export default async function DashboardPage() {
               <ul className="flex flex-col gap-1 text-sm">
                 {stats.mostSuggestedModules.slice(0, 5).map((moduleStat) => (
                   <li key={moduleStat.module} className="flex justify-between">
-                    <span>{moduleLabel(t, moduleStat.module)}</span>
+                    <ModuleBadge module={moduleStat.module} t={t} />
                     <span className="font-medium">{moduleStat.count}</span>
                   </li>
                 ))}

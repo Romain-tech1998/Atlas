@@ -14,8 +14,8 @@ import { ContextBundleView } from "./context-bundle-view";
 import { ExecutionPlanView } from "./execution-plan-view";
 import { ScoreBreakdownView } from "./score-breakdown-view";
 import { LearningSignalsView } from "./learning-signals-view";
+import { ModuleBadge } from "@/components/module/module-badge";
 import { renderLocalized } from "@/i18n/render";
-import { moduleLabel } from "@/i18n/module-label";
 import type { AxisPipelineResult } from "@/brain/types";
 
 interface AxisResultCardProps {
@@ -24,7 +24,6 @@ interface AxisResultCardProps {
 
 export function AxisResultCard({ result }: AxisResultCardProps) {
   const t = useTranslations();
-  const chosenModuleLabel = moduleLabel(t, result.routing.chosenModule);
 
   return (
     <Card>
@@ -33,9 +32,7 @@ export function AxisResultCard({ result }: AxisResultCardProps) {
           <CardTitle className="text-base">{renderLocalized(t, result.summary)}</CardTitle>
           <div className="flex gap-1">
             {result.routing.suggestedModules.map((module) => (
-              <Badge key={module} variant={module === result.routing.chosenModule ? "default" : "outline"}>
-                {moduleLabel(t, module)}
-              </Badge>
+              <ModuleBadge key={module} module={module} t={t} />
             ))}
           </div>
         </div>
@@ -53,7 +50,9 @@ export function AxisResultCard({ result }: AxisResultCardProps) {
           </div>
           <div>
             <p className="text-muted-foreground">{t("axis.resultCard.module")}</p>
-            <p className="font-medium">{chosenModuleLabel}</p>
+            <p className="font-medium">
+              <ModuleBadge module={result.routing.chosenModule} t={t} />
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground">{t("axis.resultCard.due")}</p>

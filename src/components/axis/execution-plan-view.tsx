@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
+import { ModuleBadge } from "@/components/module/module-badge";
 import { renderLocalized } from "@/i18n/render";
-import { moduleLabel } from "@/i18n/module-label";
 import { automationLabel } from "@/i18n/automation-label";
 import type { ExecutionPlan } from "@/brain/planning/types";
 
@@ -26,9 +26,9 @@ export function ExecutionPlanView({ plan }: ExecutionPlanViewProps) {
           <li key={step.order} className="flex gap-2">
             <span className="text-muted-foreground">{step.order}.</span>
             <span>{renderLocalized(t, step.description)}</span>
-            <Badge variant="outline" className="ml-auto">
-              {moduleLabel(t, step.module)}
-            </Badge>
+            <span className="ml-auto">
+              <ModuleBadge module={step.module} t={t} />
+            </span>
           </li>
         ))}
       </ol>
