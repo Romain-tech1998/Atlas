@@ -32,6 +32,12 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template itself (Sprint-039): every value in .env.example
+# is either blank or a harmless placeholder/localhost URL, never a real
+# secret — it needs to actually be in the repo so a fresh clone (including
+# Vercel's own build) has the full list of vars to set, instead of relying
+# on a file that, until now, only ever existed locally across sessions.
+!.env.example
 
 # vercel
 .vercel

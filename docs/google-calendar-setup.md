@@ -40,7 +40,8 @@ or RSVPs to anything, and no write scope is ever requested.
    Production deployments need their own HTTPS redirect URI registered
    separately in the same console — this codebase never hardcodes a
    production domain; the redirect URI always comes from
-   `GOOGLE_CALENDAR_REDIRECT_URI`.
+   `GOOGLE_CALENDAR_REDIRECT_URI`. See `docs/deployment.md` (Sprint-039)
+   for the exact production steps once a Vercel domain exists.
 4. Save the generated **Client ID** and **Client secret**.
 
 ## 4. Environment variables
